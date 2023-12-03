@@ -211,7 +211,13 @@ assert parse_document(list(d.keys())) == sum(d.values())
 
 
 with open('day1_input', 'r') as f:
-    lines = [line.rstrip() for line in f]
+    lines = [
+        line
+        .rstrip()
+        .replace('one', 'oonee')
+        .replace('two', 'ttwoo')
+        for line in f
+    ]
 
 
 assert parse_document(lines) == 55343, parse_document(lines)
