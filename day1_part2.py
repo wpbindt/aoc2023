@@ -214,5 +214,5 @@ with open('day1_input', 'r') as f:
     lines = [line.rstrip() for line in f]
 
 
-assert parse_document(lines) == 55343
+assert parse_document(lines) == 55343, parse_document(lines)
 
