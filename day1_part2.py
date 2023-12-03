@@ -1,3 +1,4 @@
+from uuid import uuid4
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Union, Iterator, Generic, Protocol, TypeVar
@@ -148,34 +149,65 @@ assert parse_document(['1nineight']) in {19, 18}
 assert parse_document(['sevenineight']) == 78
 
 
+d = {
+    'vvcfdjlpcrfnnmbcx4eight9mtcfqqqfl5fourfive': 45,
+    'qbcxpccssl9kvqtjncjdxsrpp8sixbnmq': 96,
+    'sixonexjgqthdnrpfivetgnxqv1': 61,
+    'eightthree33ngpkqtqgtkmcfgqqgj313': 83,
+    'onezfnlseven1': 11,
+    '2threefhcs': 23,
+    '3nineeightzmpvjqrvcb1tkmchzjtsrfllv': 31,
+    '58cjnxhzfknnkj4ninezvskrvrc': 59,
+    'hthree16zdtbfnlx': 36,
+    'tzqcksevenfour3foursix5': 75,
+    'qbbzz1threesevenone': 11,
+    'onegfzhlthree12': 12,
+    'gpjjzfiveone21qbrjdrz7': 57,
+    'xcpjznj54fivesevenfiveq': 55,
+    'gsevenflcgfcmqtrzstrmnine9two': 72,
+    '7nrsmkbqffnnvfpjgb': 77,
+    'tfhnnmpbzq67six': 66,
+    '52jhltfzqhfprmtgbmhg': 52,
+    'vchpblqmsvffourzkndtsg7': 47,
+    'eightsevenvgfpttr62hmfzf4f': 84,
+    'eight4four1tsvfq': 81,
+    '4sevensix': 46,
+    'vrkmjrrxnbgjbxfqxllp17four1bdm6': 16,
+    '2kqfd4threefour5': 25,
+    '44m': 44,
+    '3four2zcfvtplkrbeight274': 34,
+    'one7sixninesix': 16,
+    'kkxmtmdthree6jrj6': 36,
+    '81sevenmnine1llbqrsprc': 81,
+    '5nine9qgjceight': 58,
+    'three1sdmq9sevenfournine': 39,
+    'khnlbmzhvlsix3': 63,
+    'nineone6onesixvlnlxeightfive': 95,
+    'schplznseveneightnlcxgr7four': 74,
+    '6one1djcdmpdrgq3two': 62,
+    'fourzhpnphmq52r813four': 44,
+    'scsxjthreefoureight2fivepfmpfj8': 38,
+    '69xvbxfffmr7one8gmch8': 68,
+    'one8tfpgrdhm': 18,
+    '2gxmhtfrbrkpdvlvsmdqrktxtrpssbrv933': 23,
+    '4vfrtkdqlbtwordlbppsssp': 42,
+    '2cjmtvnzpbkdcq5twofourtwo': 22,
+    '2three5onetwogpfqtszbjh': 22,
+    'hgvnine9four996': 96,
+    '37142745': 35,
+    'four73': 43,
+    '8552ztclnd': 82,
+    'onevmpd76eighth': 18,
+    'threethree8': 38,
+    'bgtwoonedrmc35': 25,
+    '23one': 21,
+    '9lpxzhkck2five3qone9zgxzrzd': 99,
+    'hs1': 11,
+}
 
-#{
-#    'vvcfdjlpcrfnnmbcx4eight9mtcfqqqfl5fourfive': 45,
-#    'qbcxpccssl9kvqtjncjdxsrpp8sixbnmq': 96,
-#    'sixonexjgqthdnrpfivetgnxqv1': 61,
-#    'eightthree33ngpkqtqgtkmcfgqqgj313': 83,
-#    'onezfnlseven1': 11,
-#    '2threefhcs': 23,
-#    '3nineeightzmpvjqrvcb1tkmchzjtsrfllv': 3,
-#    '58cjnxhzfknnkj4ninezvskrvrc':,
-#    'hthree16zdtbfnlx':,
-#    'tzqcksevenfour3foursix5':,
-#    'qbbzz1threesevenone':,
-#    'onegfzhlthree12':,
-#    'gpjjzfiveone21qbrjdrz7':,
-#    'xcpjznj54fivesevenfiveq':,
-#    'gsevenflcgfcmqtrzstrmnine9two':,
-#    '7nrsmkbqffnnvfpjgb':,
-#    'tfhnnmpbzq67six':,
-#    '52jhltfzqhfprmtgbmhg':,
-#    'vchpblqmsvffourzkndtsg7':,
-#    'eightsevenvgfpttr62hmfzf4f':,
-#    'eight4four1tsvfq':,
-#    '4sevensix':,
-#    'vrkmjrrxnbgjbxfqxllp17four1bdm6':,
-#    '2kqfd4threefour5':,
-#    '44m':,
-#}
+
+print(uuid4())
+assert parse_document(list(d.keys())) == sum(d.values())
 
 
 with open('day1_input', 'r') as f:
@@ -183,3 +215,4 @@ with open('day1_input', 'r') as f:
 
 
 print(parse_document(lines))
+
