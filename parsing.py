@@ -26,7 +26,7 @@ class Parser(Protocol[T]):
 
 
 def digit(to_parse: str) -> ParseResult[str]:
-    if not to_parse[0].isdigit() or len(to_parse) == 0:
+    if len(to_parse) == 0 or not to_parse[0].isdigit():
         return ParseResult.failure(to_parse)
     return ParseResult(result=to_parse[0], remainder=to_parse[1:])
 
@@ -79,6 +79,14 @@ def word(word_to_parse: str) -> Parser[str]:
 
 S = TypeVar('S')
 U = TypeVar('U')
+
+
+def separated_by(parser: Parser[T], separator: str) -> Parser[list[T]]:
+    return and_(
+        many(left(parser, word(separator))),
+        parser,
+        combiner=lambda ts, t: ts + [t],
+    )
 
 
 def and_(left_parser: Parser[T], right_parser: Parser[S], combiner: Callable[[S, T], U]) -> Parser[U]:

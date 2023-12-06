@@ -36,12 +36,6 @@ class Game:
 # (Game.from_integer . int) <$> ('Game ' *> digit <* ':')
 
 
-def separated_by(parser: Parser[T], separator: str) -> Parser[list[T]]:
-    return and_(
-        many(left(parser, word(separator))),
-        parser,
-        combiner=lambda ts, t: ts + [t],
-    )
 
 @dataclass(frozen=True)
 class BagContent:
