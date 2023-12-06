@@ -230,6 +230,11 @@ def collect_possible_games(unparsed_games: list[str], bag: BagContent) -> int:
     games = [game(unparsed_game).result for unparsed_game in unparsed_games]
     return sum(game.id_ for game in games if game.is_possible_with(bag))
 
+
+def sum_powers(unparsed_games: list[str]) -> int:
+    games = [game(unparsed_game).result for unparsed_game in unparsed_games]
+    return sum(game.get_lower_bound().power() for game in games)
+
 assert not Game(id_=1, bags=[]).is_possible_with(BagContent(1, 2, 3))
 assert not Game(id_=1, bags=[BagContent(12, 2, 3)]).is_possible_with(BagContent(1, 2, 3))
 assert collect_possible_games(
@@ -249,9 +254,15 @@ assert Game(
 ).get_lower_bound() == BagContent(12, 4, 3)
 assert BagContent(12, 2, 3).power() == 12 * 2 * 3
 
+assert sum_powers(
+    [
+        "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",  # 4 
+        "Game 2: 9 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",
+    ],
+) == 4 * 6 * 2 + 9 * 4 * 2
 
 with open('day2_input', 'r') as f:
     unparsed_games = [line for line in f]
 
-print(collect_possible_games(unparsed_games, BagContent(red=12, blue=14, green=13)))
+print(sum_powers(unparsed_games))
 
