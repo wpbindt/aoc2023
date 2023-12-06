@@ -26,7 +26,7 @@ class Parser(Protocol[T]):
 
 
 def digit(to_parse: str) -> ParseResult[str]:
-    if not to_parse[0].isdigit():
+    if not to_parse[0].isdigit() or len(to_parse) == 0:
         return ParseResult.failure(to_parse)
     return ParseResult(result=to_parse[0], remainder=to_parse[1:])
 
