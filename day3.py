@@ -5,7 +5,7 @@ from parsing import *
 
 @dataclass
 class Symbol:
-    neighbors: set[tuple[int, int]] = field(default_factory=set)
+    pass
 
 
 @dataclass(frozen=True)
@@ -53,14 +53,15 @@ def get_neighbors(row_number, column_number):
 
 def parse_document(to_parse: str) -> PartsDocument:
     parsed = parts_document(to_parse).result
-    symbols = []
+    symbols_coordinates = set()
     for row_number, line in enumerate(parsed):
         for column_number, c in enumerate(line):
             if isinstance(c, Nothing):
                 continue
-            c.neighbors = get_neighbors(row_number, column_number)
             if isinstance(c, Symbol):
-                symbols.append(c)
+                symbols_coordinates.add((row_number, column_number))
+                continue
+            c.neighbors = get_neighbors(row_number, column_number)
 
     numbers = []
     for line in parsed:
@@ -69,8 +70,13 @@ def parse_document(to_parse: str) -> PartsDocument:
                 continue
             numbers.append(sum(group, start=Digit('')))
 
+    result = []
+    for number in numbers:
+        if len(number.neighbors & symbols_coordinates) > 0:
+            result.append(number.digit)
 
-    return parsed, numbers
+
+    return result
 
 
 
@@ -83,4 +89,8 @@ assert parts_line('..*&').result == [Nothing(), Nothing(), Symbol(), Symbol()]
 assert parts_line('.3.*&').result == [Nothing(), Digit('3'), Nothing(), Symbol(), Symbol()], parts_line('.3.*&').result 
 assert parts_document('.3.*&\n..4*.').result == [[Nothing(), Digit('3'), Nothing(), Symbol(), Symbol()], [Nothing(), Nothing(), Digit('4'), Symbol(), Nothing()]]
 
-print(parse_document('.3.*&\n..4*.'))
+with open('day3_input', 'r') as f:
+    lines = '\n'.join([line for line in f])
+
+print(sum(map(int, parse_document(lines))))
+
