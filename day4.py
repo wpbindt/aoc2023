@@ -4,8 +4,8 @@ from parsing import *
 def points(to_parse: str) -> int:
     pass
 
-card_header = right(right(word('Card '), digit), word(': '))
 integer = apply(int, apply(''.join, many_plus(digit)))
+card_header = right(right(word('Card '), integer), word(': '))
 numbers = apply(set, separated_by_(integer, many_plus(word(' '))))
 card = right(card_header, numbers)
 winning_numbers = right(word(' | '), numbers)
@@ -22,6 +22,7 @@ example_input = '\n'.join([
 ])
 
 assert card_header('Card 1: ').result != CouldNotParse()
+assert card_header('Card 12: ').result != CouldNotParse()
 assert card_header('Card').result == CouldNotParse()
 assert card_header('Card 1').result == CouldNotParse()
 
