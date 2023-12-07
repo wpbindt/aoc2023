@@ -71,12 +71,17 @@ def parse_document(to_parse: str) -> PartsDocument:
             numbers.append(sum(group, start=Digit('')))
 
     result = []
-    for number in numbers:
-        if len(number.neighbors & symbols_coordinates) > 0:
-            result.append(number.digit)
+    for coord in symbols_coordinates:
+        relevant_numbers = []
+        for number in numbers:
+            if coord in number.neighbors:
+                relevant_numbers.append(number)
+            if len(relevant_numbers) > 2:
+                break
+        if len(relevant_numbers) == 2:
+            result.append(int(relevant_numbers[0].digit) * int(relevant_numbers[1].digit))
 
-
-    return list(map(int, result)), parsed
+    return result
 
 
 
@@ -88,55 +93,21 @@ assert nothing('.').result == Nothing()
 assert parts_line('..*&').result == [Nothing(), Nothing(), Symbol(), Symbol()]
 assert parts_line('.3.*&').result == [Nothing(), Digit('3'), Nothing(), Symbol(), Symbol()], parts_line('.3.*&').result 
 assert parts_document('.3.*&\n..4*.').result == [[Nothing(), Digit('3'), Nothing(), Symbol(), Symbol()], [Nothing(), Nothing(), Digit('4'), Symbol(), Nothing()]]
-res = parse_document('\n'.join([
-    '.3.*..',
-    '&..4*.',
-    '&.5.*.',
-]))
-assert res[0] == [3, 4], res
 
-res = parse_document('\n'.join([
-    '.35*...',
-    '...4*.9',
-    '&.5.*..',
-    '.......',
-    '..#....',
-    '...499.',
-]))
-assert res[0] == [35, 4, 499], res
+input_ = '\n'.join([
+    '467..114..',
+    '...*......',
+    '..35..633.',
+    '......#...',
+    '617*......',
+    '.....+.58.',
+    '..592.....',
+    '......755.',
+    '...$.*....',
+    '.664.598..',
+])
 
-
-res = parse_document('\n'.join([
-    '...',
-    '.3.',
-    '...',
-]))
-assert res[0] == [], res
-res = parse_document('\n'.join([
-    '*..',
-    '.3.',
-    '...',
-]))
-assert res[0] == [3], res
-
-res = parse_document('\n'.join([
-    '...........822..174..*.....&...........711.746.......&............$....../.............656....#...........265=......634.*.............430...',
-    '..827.137..*...*....39................*..............856..............767........522......$..773....619..............*...287....501.........',
-    '..........726...511.............*.....320........476...............................*................%...899....72..731...........%....$.....',
-    '...........822..174..*.....&...........711.746.......&............$....../.............656....#...........265=......634.*.............430...',
-    '..827.137..*...*....39................*..............856..............767........522......$..773....619..............*...287....501.........',
-    '..........726...511.............*.....320........476...............................*................%...899....72..731...........%....$.....',
-    '.......502*80..960........................25........464.........831.846........25.........329..985...458.+.....&................377..659....',
-]))
-assert res[0] == [
-    822, 174, 711, 656, 265, 634, 
-    39, 856, 767, 522, 773, 619, 287, 501, 
-    726, 511, 320, 731, 
-    822, 174, 711, 656, 265, 634, 430, 
-    39, 856, 767, 522, 773, 619, 287, 501,
-    726, 511, 320, 899, 72, 731,
-    502, 80, 458, 377, 659
-], res
+assert sum(parse_document(input_)) == 467835
 
 def print_parsed(parsed: PartsDocument) -> str:
     return '\n'.join(
@@ -161,7 +132,6 @@ def print_character(c: N | S | Digit) -> str:
 with open('day3_input') as f:
     lines = ''.join([line for line in f])
     print(lines)
-result, parsed = parse_document(lines)
-assert 456 in result
+result = parse_document(lines)
 print(sum(result))
 
