@@ -42,6 +42,10 @@ def or_(*parsers: Parser[T]) -> Parser[T]:
     return parser
 
 
+def many_plus(parser: Parser[T]) -> Parser[list[T]]:
+    return and_(parser, many(parser), lambda t, ts: [t, *ts])
+
+
 def many(parser: Parser[T]) -> Parser[list[T]]:
     def parser_(to_parse: str) -> ParseResult[T]:
         result = parser(to_parse)
@@ -81,6 +85,14 @@ S = TypeVar('S')
 U = TypeVar('U')
 
 
+def separated_by_(parser: Parser[T], separator: Parser[S]) -> Parser[list[T]]:
+    return and_(
+        many(left(parser, separator)),
+        parser,
+        combiner=lambda ts, t: ts + [t],
+    )
+
+
 def separated_by(parser: Parser[T], separator: str) -> Parser[list[T]]:
     return and_(
         many(left(parser, word(separator))),
@@ -96,6 +108,7 @@ def and_(left_parser: Parser[T], right_parser: Parser[S], combiner: Callable[[S,
             return ParseResult(result=CouldNotParse(), remainder=to_parse)
 
         result2 = right_parser(result1.remainder)
+
         if result2.result == CouldNotParse():
             return ParseResult(result=CouldNotParse(), remainder=to_parse)
 
@@ -130,3 +143,4 @@ def apply(
             return ParseResult(result=CouldNotParse(), remainder=to_parse)
         return ParseResult(result=function(result.result), remainder=result.remainder)
     return parser_
+
