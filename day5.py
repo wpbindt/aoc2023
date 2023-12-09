@@ -57,26 +57,46 @@ class NumberMapLine:
         }
 
 
+def compose(dict1: dict[int, int], dict2: dict[int, int]) -> dict[int, int]:
+    result = {
+                 k: dict2.get(dict1[k], dict1[k])
+                 for k in dict1
+             } | {
+                 k: v
+                 for k, v in dict2.items()
+                 if k not in dict1
+             }
+
+    return result
+
+
 class NumberMap:
     def __init__(
         self,
-        maps: tuple[NumberMapLine, ...],
+        dictionary: dict[int, int],
     ):
-        self.maps = maps
+        self._dictionary = dictionary
 
-    def _to_dict(self) -> dict[int, int]:
-        result = {}
-        for map_ in self.maps:
-            result |= map_.to_dict()
-        return result
+    @classmethod
+    def from_maps(cls, maps: tuple[NumberMapLine, ...]) -> NumberMap:
+        dictionary = {}
+        for map_ in maps:
+            dictionary |= map_.to_dict()
+        return cls(dictionary)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, NumberMap):
             return False
-        return self.maps == other.maps
+        return self._dictionary.items() == other._dictionary.items()
+
+    def __hash__(self) -> int:
+        return hash(self._dictionary.items())
 
     def __getitem__(self, item: int) -> int:
-        return self._to_dict().get(item, item)
+        return self._dictionary.get(item, item)
+
+    def __add__(self, other) -> NumberMap:
+        return NumberMap(compose(self._dictionary, other._dictionary))
 
 
 def apply_number_map(number_maps: tuple[NumberMap, ...], item: int) -> int:
@@ -88,11 +108,18 @@ def apply_number_map(number_maps: tuple[NumberMap, ...], item: int) -> int:
 
 
 def lowest_location(to_parse: str) -> int:
+    print(1)
     seeds_line, _, remainder = to_parse.split('\n', 2)
+    print(2)
     seed_numbers: set[int] = seeds(seeds_line).result
+    print(3)
     number_maps_ = number_maps(remainder.replace('\n\n', '|')[:-1]).result
+    print(4)
+    number_map = sum(number_maps_, start=NumberMap({}))
+    print(5)
+
     locations = {
-        apply_number_map(number_maps_, seed)
+        number_map[seed]
         for seed in seed_numbers
     }
     return min(locations)
@@ -102,7 +129,7 @@ seeds = apply(set, right(word("seeds: "), separated_by(integer, ' ')))
 
 number_map_line = apply(NumberMapLine.from_list, separated_by(integer, ' '))
 number_map_lines = apply(
-    lambda x: NumberMap(tuple(x)),
+    lambda x: NumberMap.from_maps(tuple(x)),
     separated_by(number_map_line, '\n')
 )
 
@@ -114,33 +141,40 @@ number_maps = apply(tuple, separated_by(number_map, '|'))
 
 assert seeds("seeds: 79 14 55 13").result == {79, 14, 55, 13}
 assert number_map_line("60 56 2").result == NumberMapLine(60, 56, 2)
-assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, 56, 37),)),number_map("humidity-to-location map:\n60 56 37").result
-assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
-assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
-assert number_map("water-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
-assert number_map("seed-to-soil map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
+assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap.from_maps((NumberMapLine(60, 56, 37),)),number_map("humidity-to-location map:\n60 56 37").result
+assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap.from_maps((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
+assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap.from_maps((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
+assert number_map("water-to-location map:\n60 56 37\n9 9 9").result == NumberMap.from_maps((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
+assert number_map("seed-to-soil map:\n60 56 37\n9 9 9").result == NumberMap.from_maps((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
 assert number_maps("water-to-location map:\n60 56 37\n9 9 9|seed-to-soil map:\n9 9 9").result == (
-    NumberMap(
+    NumberMap.from_maps(
         (NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),)
     ),
-    NumberMap(
+    NumberMap.from_maps(
         (NumberMapLine(9, 9, 9),)
     ),
 )
-assert NumberMap(tuple())[1000] == 1000
-assert NumberMap((NumberMapLine(60, 56, 37),))[56] == 60
-assert NumberMap((NumberMapLine(60, 56, 37),))[1000] == 1000
-assert NumberMap((NumberMapLine(60, 56, 2),))[58] == 58
-assert NumberMap((NumberMapLine(60, 56, 2),))[57] == 61
+assert NumberMap.from_maps(tuple())[1000] == 1000
+assert NumberMap.from_maps((NumberMapLine(60, 56, 37),))[56] == 60
+assert NumberMap.from_maps((NumberMapLine(60, 56, 37),))[1000] == 1000
+assert NumberMap.from_maps((NumberMapLine(60, 56, 2),))[58] == 58
+assert NumberMap.from_maps((NumberMapLine(60, 56, 2),))[57] == 61
 
-number_map_1 = NumberMap((NumberMapLine(60, 56, 2),))
-number_map_2 = NumberMap((NumberMapLine(90, 61, 2),))
-assert apply_number_map((NumberMap(tuple()),), 9) == 9
+number_map_1 = NumberMap.from_maps((NumberMapLine(60, 56, 2),))
+number_map_2 = NumberMap.from_maps((NumberMapLine(90, 61, 2),))
+assert apply_number_map((NumberMap.from_maps(tuple()),), 9) == 9
 assert apply_number_map((number_map_1,), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 57) == 90
 assert lowest_location(example_data) == 35
 
+assert compose({}, {}) == {}
+assert compose({1: 2}, {}) == {1: 2}
+assert compose({1: 2}, {3: 4}) == {1: 2, 3: 4}
+assert compose({1: 2, 3: 5}, {3: 4}) == {1: 2, 3: 5}, compose({1: 2, 3: 5}, {3: 4})
+assert compose({1: 9, 2: 10}, {3: 4}) == {1: 9, 2: 10, 3: 4}
+assert compose({1: 9, 2: 10, 3: 11}, {3: 4}) == {1: 9, 2: 10, 3: 11}
+assert compose({1: 9, 2: 10, 3: 11}, {10: 1000}) == {1: 9, 2: 1000, 3: 11, 10: 1000}, compose({1: 9, 2: 10, 3: 11}, {10: 1000})
 
 with open('day5_input', 'r') as f:
     data = f.read()
