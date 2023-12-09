@@ -53,4 +53,3 @@ assert and_(numbers, winning_numbers, lambda t, s: (t, s))('41 48 | 86  6 48 53'
 assert game('Card 1: 41 48 | 86  6 48 53').result == ({41, 48}, {86, 6, 48, 53})
 
 assert points(example_input) == 13
-
