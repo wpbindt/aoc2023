@@ -104,16 +104,12 @@ def apply_number_map(number_maps: tuple[NumberMap, ...], item: int) -> int:
     result = item
     for number_map_ in number_maps:
         result = number_map_[result]
-    print(result)
     return result
 
 
 def lowest_location(to_parse: str) -> int:
-    print(1)
     seeds_line, _, remainder = to_parse.split('\n', 2)
-    print(2)
     seed_numbers: set[int] = seeds(seeds_line).result
-    print(3)
     number_maps_ = number_maps(remainder.replace('\n\n', '|')[:-1]).result
 
     locations = {
@@ -123,7 +119,8 @@ def lowest_location(to_parse: str) -> int:
     return min(locations)
 
 
-seeds = apply(set, right(word("seeds: "), separated_by(integer, ' ')))
+range_ = and_(integer, right(word(' '), integer), lambda lower, size: set(range(lower, lower + size)))
+seeds = apply(lambda x: set.union(*x), right(word("seeds: "), separated_by(range_, ' ')))
 
 number_map_line = apply(NumberMapLine.from_list, separated_by(integer, ' '))
 number_map_lines = apply(
@@ -137,7 +134,7 @@ number_map = right(number_map_header, number_map_lines)
 number_maps = apply(tuple, separated_by(number_map, '|'))
 
 
-assert seeds("seeds: 79 14 55 13").result == {79, 14, 55, 13}
+assert seeds("seeds: 79 3 55 1").result == {79, 80, 81, 55}
 assert number_map_line("60 56 2").result == NumberMapLine(60, 56, 2)
 assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, 56, 37),)),number_map("humidity-to-location map:\n60 56 37").result
 assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
@@ -164,7 +161,7 @@ assert apply_number_map((NumberMap(tuple()),), 9) == 9
 assert apply_number_map((number_map_1,), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 57) == 90
-assert lowest_location(example_data) == 35
+assert lowest_location(example_data) == 46
 
 assert compose({}, {}) == {}
 assert compose({1: 2}, {}) == {1: 2}
