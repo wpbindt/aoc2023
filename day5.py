@@ -50,7 +50,6 @@ class NumberMapLine:
     def from_list(cls, input_: list[int]) -> NumberMapLine:
         return NumberMapLine(dest=input_[0], source=input_[1], range_=input_[2])
 
-    @lru_cache
     def to_dict(self) -> dict[int, int]:
         return {
             self.source + offset: self.dest + offset
@@ -58,22 +57,28 @@ class NumberMapLine:
         }
 
 
-@dataclass(frozen=True)
 class NumberMap:
-    maps: tuple[NumberMap, ...]
+    def __init__(
+        self,
+        maps: tuple[NumberMapLine, ...],
+    ):
+        self.maps = maps
 
-    @lru_cache
     def _to_dict(self) -> dict[int, int]:
         result = {}
         for map_ in self.maps:
             result |= map_.to_dict()
         return result
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, NumberMap):
+            return False
+        return self.maps == other.maps
+
     def __getitem__(self, item: int) -> int:
         return self._to_dict().get(item, item)
 
 
-@lru_cache(maxsize=1000)
 def apply_number_map(number_maps: tuple[NumberMap, ...], item: int) -> int:
     result = item
     for number_map_ in number_maps:
@@ -109,7 +114,7 @@ number_maps = apply(tuple, separated_by(number_map, '|'))
 
 assert seeds("seeds: 79 14 55 13").result == {79, 14, 55, 13}
 assert number_map_line("60 56 2").result == NumberMapLine(60, 56, 2)
-assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, 56, 37),))
+assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, 56, 37),)),number_map("humidity-to-location map:\n60 56 37").result
 assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
 assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
 assert number_map("water-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
