@@ -66,6 +66,21 @@ class Range:
             return Range(self.start, min(range_.finish - self.start + 1, self.size))
         return Range(range_.start, min(self.finish - range_.start + 1, range_.size))
 
+    @classmethod
+    def from_start_and_finish(cls, start: int, finish: int) -> Range:
+        return Range(start, size=finish - start + 1)
+
+    def subtract(self, range_: Range) -> set[Range]:
+        if self == range_:
+            return set()
+        if self.disjoint(range_):
+            return {self}
+        if self.start == range_.start:
+            return {Range.from_start_and_finish(range_.finish + 1, self.finish)}
+        if range_.finish == self.finish and self.start < range_.start:
+            return {Range.from_start_and_finish(self.start, range_.start - 1)}
+        return {Range.from_start_and_finish(self.start, range_.start - 1), Range.from_start_and_finish(range_.finish + 1, self.finish)}
+
 
 @dataclass(frozen=True)
 class NumberMapLine:
@@ -182,6 +197,12 @@ assert number_map_line_1.intersect(Range(90, 1)) == None
 assert number_map_line_1.intersect(Range(55, 2)) == Range(56, 1)
 assert number_map_line_1.intersect(Range(56, 3)) == Range(56, 2)
 assert number_map_line_1.intersect(Range(57, 2)) == Range(57, 1)
+
+assert Range(50, 3).subtract(Range(50, 3)) == set()
+assert Range(50, 3).subtract(Range(50, 2)) == {Range(52, 1)}, Range(50, 3).subtract(Range(50, 2))
+assert Range(50, 3).subtract(Range(51, 2)) == {Range(50, 1)}
+assert Range(50, 3).subtract(Range(90, 1)) == {Range(50, 3)}
+assert Range(50, 3).subtract(Range(51, 1)) == {Range(50, 1), Range(52, 1)}
 
 assert number_map_1.apply_to_range(Range(56, 1)) == {Range(60, 1)}
 assert number_map_1.apply_to_range(Range(56, 1)) == {Range(60, 1)}
