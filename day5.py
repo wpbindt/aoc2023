@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import cached_property
+
 from parsing import *
 from dataclasses import dataclass
 
@@ -44,11 +46,25 @@ class Range:
     start: int
     size: int
 
+    @cached_property
+    def finish(self) -> int:
+        return self.start + self.size - 1
+
     def to_set(self) -> set[int]:
         return set(range(self.start, self.start + self.size))
 
     def __contains__(self, item: int) -> bool:
         return self.start <= item < self.start + self.size
+
+    def disjoint(self, other: Range) -> bool:
+        return self.start > other.finish or other.start > self.finish
+
+    def intersect(self, range_: Range) -> Range | None:
+        if self.disjoint(range_):
+            return None
+        if self.start >= range_.start:
+            return Range(self.start, min(range_.finish - self.start + 1, self.size))
+        return Range(range_.start, min(self.finish - range_.start + 1, range_.size))
 
 
 @dataclass(frozen=True)
@@ -67,6 +83,9 @@ class NumberMapLine:
 
     def __contains__(self, item) -> bool:
         return item in self.range_
+
+    def intersect(self, range_: Range) -> Range | None:
+        return self.range_.intersect(range_)
 
 
 class NumberMap:
@@ -89,6 +108,9 @@ class NumberMap:
             if item in map:
                 return map[item]
         return item
+
+    def apply_to_range(self, range_: Range) -> set[Range]:
+        return {Range(self[range_.start], range_.size)}
 
 
 def apply_number_map(number_maps: tuple[NumberMap, ...], item: int) -> int:
@@ -146,12 +168,26 @@ assert NumberMap((NumberMapLine(60, Range(56, 37)),))[1000] == 1000
 assert NumberMap((NumberMapLine(60, Range(56, 2)),))[58] == 58
 assert NumberMap((NumberMapLine(60, Range(56, 2)),))[57] == 61
 
-number_map_1 = NumberMap((NumberMapLine(60, Range(56, 2)),))
+number_map_line_1 = NumberMapLine(60, Range(56, 2))
+number_map_1 = NumberMap((number_map_line_1,))
 number_map_2 = NumberMap((NumberMapLine(90, Range(61, 2)),))
 assert apply_number_map((NumberMap(tuple()),), 9) == 9
 assert apply_number_map((number_map_1,), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 57) == 90
+
+assert number_map_line_1.intersect(Range(56, 2)) == Range(56, 2)
+assert number_map_line_1.intersect(Range(55, 1)) == None
+assert number_map_line_1.intersect(Range(90, 1)) == None
+assert number_map_line_1.intersect(Range(55, 2)) == Range(56, 1)
+assert number_map_line_1.intersect(Range(56, 3)) == Range(56, 2)
+assert number_map_line_1.intersect(Range(57, 2)) == Range(57, 1)
+
+assert number_map_1.apply_to_range(Range(56, 1)) == {Range(60, 1)}
+assert number_map_1.apply_to_range(Range(56, 1)) == {Range(60, 1)}
+assert number_map_1.apply_to_range(Range(30, 1)) == {Range(30, 1)}
+assert number_map_1.apply_to_range(Range(55, 2)) == {Range(55, 1), Range(60, 1)}
+
 assert lowest_location(example_data) == 46
 
 # with open('day5_input', 'r') as f:
