@@ -47,6 +47,9 @@ class Range:
     def to_set(self) -> set[int]:
         return set(range(self.start, self.start + self.size))
 
+    def __contains__(self, item: int) -> bool:
+        return self.start <= item < self.start + self.size
+
 
 @dataclass(frozen=True)
 class NumberMapLine:
@@ -63,7 +66,7 @@ class NumberMapLine:
         raise KeyError
 
     def __contains__(self, item) -> bool:
-        return self.range_.start <= item < self.range_.start + self.range_.size
+        return item in self.range_
 
 
 class NumberMap:
