@@ -4,7 +4,6 @@ from parsing import *
 def points(to_parse: str) -> int:
     pass
 
-integer = apply(int, apply(''.join, many_plus(digit)))
 card_header = right(right(word('Card '), integer), word(': '))
 numbers = apply(set, separated_by_(integer, many_plus(word(' '))))
 card = right(card_header, numbers)

@@ -145,3 +145,4 @@ def apply(
         return ParseResult(result=function(result.result), remainder=result.remainder)
     return parser_
 
+integer = apply(int, apply(''.join, many_plus(digit)))
