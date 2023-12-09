@@ -51,26 +51,19 @@ class Range:
 @dataclass(frozen=True)
 class NumberMapLine:
     dest: int
-    source: int
-    range_: int
+    range_: Range
 
     @classmethod
     def from_list(cls, input_: list[int]) -> NumberMapLine:
-        return NumberMapLine(dest=input_[0], source=input_[1], range_=input_[2])
-
-    def to_dict(self) -> dict[int, int]:
-        return {
-            self.source + offset: self.dest + offset
-            for offset in range(self.range_)
-        }
+        return NumberMapLine(dest=input_[0], range_=Range(input_[1], input_[2]))
 
     def __getitem__(self, item: int) -> int:
         if item in self:
-            return item + (self.dest - self.source)
+            return item + (self.dest - self.range_.start)
         raise KeyError
 
     def __contains__(self, item) -> bool:
-        return self.source <= item < self.source + self.range_
+        return self.range_.start <= item < self.range_.start + self.range_.size
 
 
 class NumberMap:
@@ -130,28 +123,28 @@ number_maps = apply(tuple, separated_by(number_map, '|'))
 
 
 assert seeds("seeds: 79 3 55 1").result == {Range(79, 3), Range(55, 1)}
-assert number_map_line("60 56 2").result == NumberMapLine(60, 56, 2)
-assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, 56, 37),)),number_map("humidity-to-location map:\n60 56 37").result
-assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
-assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
-assert number_map("water-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
-assert number_map("seed-to-soil map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
+assert number_map_line("60 56 2").result == NumberMapLine(60, Range(56, 2))
+assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, Range(56, 37)),)),number_map("humidity-to-location map:\n60 56 37").result
+assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
+assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
+assert number_map("water-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
+assert number_map("seed-to-soil map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
 assert number_maps("water-to-location map:\n60 56 37\n9 9 9|seed-to-soil map:\n9 9 9").result == (
     NumberMap(
-        (NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),)
+        (NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),)
     ),
     NumberMap(
-        (NumberMapLine(9, 9, 9),)
+        (NumberMapLine(9, Range(9, 9)),)
     ),
 )
 assert NumberMap(tuple())[1000] == 1000
-assert NumberMap((NumberMapLine(60, 56, 37),))[56] == 60, NumberMap((NumberMapLine(60, 56, 37),))[56]
-assert NumberMap((NumberMapLine(60, 56, 37),))[1000] == 1000
-assert NumberMap((NumberMapLine(60, 56, 2),))[58] == 58
-assert NumberMap((NumberMapLine(60, 56, 2),))[57] == 61
+assert NumberMap((NumberMapLine(60, Range(56, 37)),))[56] == 60, NumberMap((NumberMapLine(60, Range(56, 37)),))[56]
+assert NumberMap((NumberMapLine(60, Range(56, 37)),))[1000] == 1000
+assert NumberMap((NumberMapLine(60, Range(56, 2)),))[58] == 58
+assert NumberMap((NumberMapLine(60, Range(56, 2)),))[57] == 61
 
-number_map_1 = NumberMap((NumberMapLine(60, 56, 2),))
-number_map_2 = NumberMap((NumberMapLine(90, 61, 2),))
+number_map_1 = NumberMap((NumberMapLine(60, Range(56, 2)),))
+number_map_2 = NumberMap((NumberMapLine(90, Range(61, 2)),))
 assert apply_number_map((NumberMap(tuple()),), 9) == 9
 assert apply_number_map((number_map_1,), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 56) == 60
