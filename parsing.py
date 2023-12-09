@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Union, Iterator, Generic, Protocol, TypeVar
-import string
+from typing import Generic, Protocol, TypeVar, Callable
 
 T = TypeVar('T')
+
 
 @dataclass(frozen=True)
 class CouldNotParse:
@@ -94,14 +95,14 @@ def separated_by_(parser: Parser[T], separator: Parser[S]) -> Parser[list[T]]:
 
 
 def separated_by(parser: Parser[T], separator: str) -> Parser[list[T]]:
-    return and_(
-        many(left(parser, word(separator))),
-        parser,
-        combiner=lambda ts, t: ts + [t],
-    )
+    return separated_by_(parser, word(separator))
 
 
-def and_(left_parser: Parser[T], right_parser: Parser[S], combiner: Callable[[S, T], U]) -> Parser[U]:
+def and_(
+    left_parser: Parser[T],
+    right_parser: Parser[S],
+    combiner: Callable[[T, S], U] = lambda t, s: (t, s),
+) -> Parser[U]:
     def parser(to_parse: str) -> ParseResult[U]:
         result1 = left_parser(to_parse)
         if result1.result == CouldNotParse():
@@ -112,7 +113,7 @@ def and_(left_parser: Parser[T], right_parser: Parser[S], combiner: Callable[[S,
         if result2.result == CouldNotParse():
             return ParseResult(result=CouldNotParse(), remainder=to_parse)
 
-        return ParseResult(combiner(result1.result, result2.result),result2.remainder)
+        return ParseResult(combiner(result1.result, result2.result), result2.remainder)
 
     return parser
 

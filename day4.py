@@ -43,6 +43,12 @@ assert card('Card 1: 13 12  1').result == {13, 12, 1}
 assert winning_numbers(' | 86  6 48 53').result == {86, 6, 48, 53}
 assert and_(word('hi'), word(' | 86 6'), lambda t, s: s)('hi | 86 6').result == ' | 86 6'
 assert and_(word('hi'), winning_numbers, lambda t, s: s)('hi | 86 6').result == {86, 6}
+assert many(word('b'))('bbbb ').result == 4 * ['b']
+assert and_(word('b'), word('a'))('ba ').result == ('b', 'a')
+
+assert separated_by_(word('a'), many(word('b')))('aba ').result == ['a', 'a']
+
+assert numbers('12 ').result == {12}
 assert and_(numbers, winning_numbers, lambda t, s: (t, s))('41 48 | 86  6 48 53').result == ({41, 48}, {86, 6, 48, 53})
 assert game('Card 1: 41 48 | 86  6 48 53').result == ({41, 48}, {86, 6, 48, 53})
 
