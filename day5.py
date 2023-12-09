@@ -1,5 +1,4 @@
 from __future__ import annotations
-from functools import lru_cache
 
 from parsing import *
 from dataclasses import dataclass
@@ -41,6 +40,15 @@ humidity-to-location map:
 
 
 @dataclass(frozen=True)
+class Range:
+    start: int
+    size: int
+
+    def to_set(self) -> set[int]:
+        return set(range(self.start, self.start + self.size))
+
+
+@dataclass(frozen=True)
 class NumberMapLine:
     dest: int
     source: int
@@ -63,19 +71,6 @@ class NumberMapLine:
 
     def __contains__(self, item) -> bool:
         return self.source <= item < self.source + self.range_
-
-
-def compose(dict1: dict[int, int], dict2: dict[int, int]) -> dict[int, int]:
-    result = {
-                 k: dict2.get(dict1[k], dict1[k])
-                 for k in dict1
-             } | {
-                 k: v
-                 for k, v in dict2.items()
-                 if k not in dict1
-             }
-
-    return result
 
 
 class NumberMap:
@@ -109,7 +104,7 @@ def apply_number_map(number_maps: tuple[NumberMap, ...], item: int) -> int:
 
 def lowest_location(to_parse: str) -> int:
     seeds_line, _, remainder = to_parse.split('\n', 2)
-    seed_numbers: set[int] = seeds(seeds_line).result
+    seed_numbers: set[int] = set.union(*[range_.to_set() for range_ in seeds(seeds_line).result])
     number_maps_ = number_maps(remainder.replace('\n\n', '|')[:-1]).result
 
     locations = {
@@ -119,8 +114,8 @@ def lowest_location(to_parse: str) -> int:
     return min(locations)
 
 
-range_ = and_(integer, right(word(' '), integer), lambda lower, size: set(range(lower, lower + size)))
-seeds = apply(lambda x: set.union(*x), right(word("seeds: "), separated_by(range_, ' ')))
+range_ = and_(integer, right(word(' '), integer), Range)
+seeds = apply(set, right(word("seeds: "), separated_by(range_, ' ')))
 
 number_map_line = apply(NumberMapLine.from_list, separated_by(integer, ' '))
 number_map_lines = apply(
@@ -134,7 +129,7 @@ number_map = right(number_map_header, number_map_lines)
 number_maps = apply(tuple, separated_by(number_map, '|'))
 
 
-assert seeds("seeds: 79 3 55 1").result == {79, 80, 81, 55}
+assert seeds("seeds: 79 3 55 1").result == {Range(79, 3), Range(55, 1)}
 assert number_map_line("60 56 2").result == NumberMapLine(60, 56, 2)
 assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, 56, 37),)),number_map("humidity-to-location map:\n60 56 37").result
 assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, 56, 37), NumberMapLine(9, 9, 9),))
@@ -163,15 +158,7 @@ assert apply_number_map((number_map_1, number_map_2), 56) == 60
 assert apply_number_map((number_map_1, number_map_2), 57) == 90
 assert lowest_location(example_data) == 46
 
-assert compose({}, {}) == {}
-assert compose({1: 2}, {}) == {1: 2}
-assert compose({1: 2}, {3: 4}) == {1: 2, 3: 4}
-assert compose({1: 2, 3: 5}, {3: 4}) == {1: 2, 3: 5}, compose({1: 2, 3: 5}, {3: 4})
-assert compose({1: 9, 2: 10}, {3: 4}) == {1: 9, 2: 10, 3: 4}
-assert compose({1: 9, 2: 10, 3: 11}, {3: 4}) == {1: 9, 2: 10, 3: 11}
-assert compose({1: 9, 2: 10, 3: 11}, {10: 1000}) == {1: 9, 2: 1000, 3: 11, 10: 1000}, compose({1: 9, 2: 10, 3: 11}, {10: 1000})
-
-with open('day5_input', 'r') as f:
-    data = f.read()
-
-print(lowest_location(data))
+# with open('day5_input', 'r') as f:
+#     data = f.read()
+#
+# print(lowest_location(data))
