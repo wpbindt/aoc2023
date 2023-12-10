@@ -71,15 +71,34 @@ class Range:
         return Range(start, size=finish - start + 1)
 
     def subtract(self, range_: Range) -> set[Range]:
-        if self == range_:
-            return set()
+        """
+        cases: -- = self
+          # |||| ---- --> return self
+          # ||||0000|||  ---> return set()
+          # --0000---   --> return (self.start, other.start) and (other.finish + 1, self.finish)
+          ||00----   ---> return (self.start, other.finish)
+          ----00||    ----> return (self.start, other.start)
+        """
         if self.disjoint(range_):
             return {self}
-        if self.start == range_.start:
-            return {Range.from_start_and_finish(range_.finish + 1, self.finish)}
-        if range_.finish == self.finish and self.start < range_.start:
+
+        if range_.start <= self.start and self.finish <= range_.finish:
+            return set()
+
+        if range_.start >= self.start and range_.finish <= self.finish:
+            result = set()
+            left = Range.from_start_and_finish(self.start, range_.start - 1)
+            if left.size > 0:
+                result.add(left)
+            right = Range.from_start_and_finish(range_.finish + 1, self.finish)
+            if right.size > 0:
+                result.add(right)
+            return result
+
+        if self.finish <= range_.finish:
             return {Range.from_start_and_finish(self.start, range_.start - 1)}
-        return {Range.from_start_and_finish(self.start, range_.start - 1), Range.from_start_and_finish(range_.finish + 1, self.finish)}
+
+        return {Range.from_start_and_finish(range_.finish + 1, self.finish)}
 
 
 @dataclass(frozen=True)
@@ -91,6 +110,10 @@ class NumberMapLine:
     def from_list(cls, input_: list[int]) -> NumberMapLine:
         return NumberMapLine(dest=input_[0], range_=Range(input_[1], input_[2]))
 
+    @cached_property
+    def offset(self) -> int:
+        return self.dest - self.range_.start
+
     def __getitem__(self, item: int) -> int:
         if item in self:
             return item + (self.dest - self.range_.start)
@@ -101,6 +124,16 @@ class NumberMapLine:
 
     def intersect(self, range_: Range) -> Range | None:
         return self.range_.intersect(range_)
+
+    def subtract(self, range_: Range) -> set[Range]:
+        return self.range_.subtract(range_)
+
+    def apply_to_range(self, range_: Range) -> tuple[Range | None, set[Range]]:
+        intersection = self.intersect(range_)
+        if intersection is None:
+            return None, {range_}
+        remainder = range_.subtract(self.range_)
+        return Range(intersection.start + self.offset, intersection.size), remainder
 
 
 class NumberMap:
@@ -125,7 +158,23 @@ class NumberMap:
         return item
 
     def apply_to_range(self, range_: Range) -> set[Range]:
-        return {Range(self[range_.start], range_.size)}
+        map1, *maps = self._maps
+        output = set()
+        result, remainder = map1.apply_to_range(range_)
+        if result is not None:
+            output.add(result)
+
+        for map_line in maps:
+            new_remainders = set()
+            for r in remainder:
+                result, new_remainder = map_line.apply_to_range(r)
+                new_remainders |= new_remainder
+                if result is not None:
+                    output.add(result)
+            remainder = new_remainders
+        if remainder != set():
+            output |= remainder
+        return output
 
 
 def apply_number_map(number_maps: tuple[NumberMap, ...], item: int) -> int:
@@ -184,6 +233,7 @@ assert NumberMap((NumberMapLine(60, Range(56, 2)),))[58] == 58
 assert NumberMap((NumberMapLine(60, Range(56, 2)),))[57] == 61
 
 number_map_line_1 = NumberMapLine(60, Range(56, 2))
+number_map_line_2 = NumberMapLine(60, Range(50, 3))
 number_map_1 = NumberMap((number_map_line_1,))
 number_map_2 = NumberMap((NumberMapLine(90, Range(61, 2)),))
 assert apply_number_map((NumberMap(tuple()),), 9) == 9
@@ -203,15 +253,20 @@ assert Range(50, 3).subtract(Range(50, 2)) == {Range(52, 1)}, Range(50, 3).subtr
 assert Range(50, 3).subtract(Range(51, 2)) == {Range(50, 1)}
 assert Range(50, 3).subtract(Range(90, 1)) == {Range(50, 3)}
 assert Range(50, 3).subtract(Range(51, 1)) == {Range(50, 1), Range(52, 1)}
+assert Range(57, 1).subtract(Range(56, 2)) == set()
+assert Range(49, 2).subtract(Range(50, 2)) == {Range(49, 1)}
+assert number_map_line_1.apply_to_range(Range(57, 1)) == (Range(61, 1), set())
+assert number_map_line_2.apply_to_range(Range(51, 1)) == (Range(61, 1), set())
+assert number_map_line_2.apply_to_range(Range(49, 2)) == (Range(60, 1), {Range(49, 1)})
 
 assert number_map_1.apply_to_range(Range(56, 1)) == {Range(60, 1)}
 assert number_map_1.apply_to_range(Range(56, 1)) == {Range(60, 1)}
-assert number_map_1.apply_to_range(Range(30, 1)) == {Range(30, 1)}
+assert number_map_1.apply_to_range(Range(30, 1)) == {Range(30, 1)}, number_map_1.apply_to_range(Range(30, 1))
 assert number_map_1.apply_to_range(Range(55, 2)) == {Range(55, 1), Range(60, 1)}
 
 assert lowest_location(example_data) == 46
 
-# with open('day5_input', 'r') as f:
-#     data = f.read()
-#
-# print(lowest_location(data))
+with open('day5_input', 'r') as f:
+    data = f.read()
+
+print(lowest_location(data))
