@@ -1,5 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import random
+from typing import TypeVar, Callable
 
 
 @dataclass(frozen=True)
@@ -81,9 +83,9 @@ assert explode(Interval(2, 9), {Interval(4, 5), Interval(6, 7)}) == {Interval(2,
 
 def shrapnel_should_be_disjoint_or_contained(interval: Interval, intervals_to_explode_by: set[Interval]) -> None:
     exploded = explode(interval, intervals_to_explode_by)
-    for interval in exploded:
+    for shrapnel in exploded:
         for exploder in intervals_to_explode_by:
-            assert interval.disjoint(exploder) or interval <= exploder
+            assert shrapnel.disjoint(exploder) or shrapnel <= exploder, f'expected {exploder} to contain or be disjoint from {shrapnel}'
 
 
 def shrapnel_should_add_back_up_to_original(interval: Interval, intervals_to_explode_by: set[Interval]) -> None:
@@ -93,7 +95,7 @@ def shrapnel_should_add_back_up_to_original(interval: Interval, intervals_to_exp
         for shrapnel in explosion
         for integer in shrapnel.to_list()
     ]
-    assert interval.to_list() == sorted(shrapnel_list)
+    assert interval.to_list() == sorted(shrapnel_list), f'expected {interval.to_list()} got {sorted(shrapnel_list)}'
 
 
 def plurality(interval: Interval, intervals_to_explode_by: set[Interval]) -> None:
@@ -106,3 +108,32 @@ def plurality(interval: Interval, intervals_to_explode_by: set[Interval]) -> Non
         running_explosion = new_running_explosion
 
     assert explosion == running_explosion
+
+
+def generate_random_interval(lower: int = -1000, higher: int = 500) -> Interval:
+    start = random.randint(lower, higher)
+    end = random.randint(start, higher)
+    return Interval(start, end)
+
+
+T = TypeVar('T')
+
+
+def generate_disjoint_set() -> set[Interval]:
+    set_size = random.randint(0, 20)
+    result = set()
+    lower = -1000
+    for _ in range(set_size):
+        generated_interval = generate_random_interval(lower=lower)
+        result.add(generated_interval)
+        lower = generated_interval.end
+    return result
+
+test_data = ((generate_random_interval(), generate_disjoint_set()) for _ in range(20000))
+
+for index, test_datum in enumerate(test_data):
+    interval, intervals_to_explode_by = test_datum
+    if index % 1000 == 0:
+        print(f'{index} test cases done')
+    shrapnel_should_add_back_up_to_original(interval, intervals_to_explode_by)
+    shrapnel_should_be_disjoint_or_contained(interval, intervals_to_explode_by)
