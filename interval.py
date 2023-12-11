@@ -211,5 +211,6 @@ def clean_up_shrinks(test_data: set[Interval]) -> None:
     assert len(cleaned_up) <= len(test_data)
 
 
-for hypo in hypotheses:
-    hypo()
+if __name__ == '__main__':
+    for hypo in hypotheses:
+        hypo()
