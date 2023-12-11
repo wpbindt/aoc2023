@@ -147,6 +147,7 @@ def hypothesis(
     def decorator(f: Callable[[T], None]) -> Callable[[], None]:
         @wraps(f)
         def wrapped() -> None:
+            print(f'testing {f.__name__}')
             test_data = (argument_generator() for _ in range(iterations))
             for ix, datum in enumerate(test_data):
                 if ix % 1000 == 0:
@@ -202,18 +203,6 @@ def clean_up_should_preserve_contents(test_data: set[Interval]) -> None:
 def clean_up_shrinks(test_data: set[Interval]) -> None:
     cleaned_up = clean_up(test_data)
     assert len(cleaned_up) <= len(test_data)
-
-
-def plurality(interval: Interval, intervals_to_explode_by: set[Interval]) -> None:
-    explosion = explode(interval, intervals_to_explode_by)
-    running_explosion = {interval}
-    for explody_interval in intervals_to_explode_by:
-        new_running_explosion = set()
-        for shrapnel in running_explosion:
-            new_running_explosion |= explode(shrapnel, {explody_interval})
-        running_explosion = new_running_explosion
-
-    assert explosion == running_explosion
 
 
 for hypo in hypotheses:
