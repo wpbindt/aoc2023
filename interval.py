@@ -126,6 +126,13 @@ def generate_disjoint_set() -> set[Interval]:
     return result
 
 
+def generate_set_of_intervals() -> set[Interval]:
+    return {
+        generate_random_interval()
+        for _ in range(random.randint(0, 40))
+    }
+
+
 def generate_explosion_test_data() -> tuple[Interval, set[Interval]]:
     return generate_random_interval(), generate_disjoint_set()
 
@@ -171,6 +178,22 @@ def shrapnel_should_add_back_up_to_original(
     assert interval.to_list() == sorted(shrapnel_list), f'expected {interval.to_list()} got {sorted(shrapnel_list)}'
 
 
+@hypothesis(generate_set_of_intervals)
+def clean_up_should_preserve_contents(test_data: set[Interval]) -> None:
+    cleaned_up = clean_up(intervals=test_data)
+    actual = [
+        element
+        for interval in cleaned_up
+        for element in interval.to_list()
+    ]
+    expected = [
+        element
+        for interval in test_data
+        for element in interval.to_list()
+    ]
+    assert set(actual) == set(expected), f'expected {set(expected)}, got {set(actual)}'
+
+
 def plurality(interval: Interval, intervals_to_explode_by: set[Interval]) -> None:
     explosion = explode(interval, intervals_to_explode_by)
     running_explosion = {interval}
@@ -185,3 +208,4 @@ def plurality(interval: Interval, intervals_to_explode_by: set[Interval]) -> Non
 
 shrapnel_should_add_back_up_to_original()
 shrapnel_should_be_disjoint_or_contained()
+clean_up_should_preserve_contents()
