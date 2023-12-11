@@ -137,10 +137,13 @@ def generate_explosion_test_data() -> tuple[Interval, set[Interval]]:
     return generate_random_interval(), generate_disjoint_set()
 
 
+hypotheses = set()
+
+
 def hypothesis(
-        argument_generator: Callable[[], T],
-        iterations: int = 10000
-) -> Callable[[Callable[[T], None]], Callable[[], None]]:
+    argument_generator: Callable[[], T],
+    iterations: int = 10000,
+) -> Callable[[Callable[[T], None]], Callable[[T], None]]:
     def decorator(f: Callable[[T], None]) -> Callable[[], None]:
         @wraps(f)
         def wrapped() -> None:
@@ -149,7 +152,8 @@ def hypothesis(
                 if ix % 1000 == 0:
                     print(f'iteration {ix} out of {iterations}')
                 f(datum)
-        return wrapped
+        hypotheses.add(wrapped)
+        return f
     return decorator
 
 
@@ -206,6 +210,5 @@ def plurality(interval: Interval, intervals_to_explode_by: set[Interval]) -> Non
     assert explosion == running_explosion
 
 
-shrapnel_should_add_back_up_to_original()
-shrapnel_should_be_disjoint_or_contained()
-clean_up_should_preserve_contents()
+for hypo in hypotheses:
+    hypo()
