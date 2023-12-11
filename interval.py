@@ -71,6 +71,12 @@ def clean_up(intervals: set[Interval]) -> set[Interval]:
         else:
             result.append(interval)
 
+    result_set = set(result)
+    for interval in result_set:
+        for other_interval in result_set:
+            if interval != other_interval and not interval.disjoint(other_interval):
+                return clean_up(result_set)
+
     return set(result)
 
 
