@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 from functools import wraps
-from typing import TypeVar, ParamSpec, Callable
+from typing import TypeVar, Callable
 
 
 @dataclass(frozen=True)
@@ -196,6 +196,12 @@ def clean_up_should_preserve_contents(test_data: set[Interval]) -> None:
         for element in interval.to_list()
     ]
     assert set(actual) == set(expected), f'expected {set(expected)}, got {set(actual)}'
+
+
+@hypothesis(generate_set_of_intervals)
+def clean_up_shrinks(test_data: set[Interval]) -> None:
+    cleaned_up = clean_up(test_data)
+    assert len(cleaned_up) <= len(test_data)
 
 
 def plurality(interval: Interval, intervals_to_explode_by: set[Interval]) -> None:
