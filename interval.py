@@ -1,13 +1,17 @@
 from __future__ import annotations
-from dataclasses import dataclass
+
 import random
-from typing import TypeVar, Callable
+from dataclasses import dataclass
+from typing import TypeVar
 
 
 @dataclass(frozen=True)
 class Interval:
     start: int
     end: int  # inclusive
+
+    def combine(self, other: Interval) -> Interval:
+        return Interval(min(self.start, other.start), max(self.end, other.end))
 
     def disjoint(self, other: Interval) -> bool:
         return self.end < other.start or other.end < self.start
@@ -56,6 +60,19 @@ def explode(interval: Interval, intervals_to_explode_by: set[Interval]) -> set[I
     ])
 
 
+def clean_up(intervals: set[Interval]) -> set[Interval]:
+    result = []
+    for interval in intervals:
+        for ix, other_interval in enumerate(result):
+            if not interval.disjoint(other_interval):
+                result[ix] = interval.combine(other_interval)
+                break
+        else:
+            result.append(interval)
+
+    return set(result)
+
+
 assert Interval(2, 5).to_list() == [2, 3, 4, 5]
 assert Interval(2, 9) <= Interval(1, 100)
 assert not (Interval(2, 9) <= Interval(3, 100))
@@ -73,12 +90,19 @@ assert Interval(2, 9).complement(Interval(3, 8)) == {Interval(2, 2), Interval(9,
 assert Interval(2, 9).complement(Interval(300, 400)) == {Interval(2, 9)}
 assert not Interval(2, 9).disjoint(Interval(2, 100))
 assert Interval(2, 9).disjoint(Interval(-3, -1))
+assert Interval(2, 5).combine(Interval(4, 9)) == Interval(2, 9)
+
 assert explode(Interval(2, 9), set()) == {Interval(2, 9)}
 assert explode(Interval(2, 9), {Interval(2, 9)}) == {Interval(2, 9)}
 assert explode(Interval(2, 9), {Interval(2, 3)}) == {Interval(2, 3), Interval(4, 9)}
 assert explode(Interval(2, 9), {Interval(4, 5)}) == {Interval(2, 3), Interval(4, 5), Interval(6, 9)}
 assert explode(Interval(2, 9), {Interval(40, 50)}) == {Interval(2, 9)}
 assert explode(Interval(2, 9), {Interval(4, 5), Interval(6, 7)}) == {Interval(2, 3), Interval(4, 5), Interval(6, 7), Interval(8, 9)}
+
+assert clean_up(set()) == set()
+assert clean_up({Interval(9, 9)}) == {Interval(9, 9)}
+assert clean_up({Interval(9, 9), Interval(2, 9)}) == {Interval(2, 9)}, clean_up({Interval(9, 9), Interval(2, 9)})
+assert clean_up({Interval(1, 9), Interval(2, 4), Interval(3, 5)}) == {Interval(1, 9)}
 
 
 def shrapnel_should_be_disjoint_or_contained(interval: Interval, intervals_to_explode_by: set[Interval]) -> None:
