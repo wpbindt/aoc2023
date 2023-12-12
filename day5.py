@@ -200,9 +200,9 @@ def lowest_location(to_parse: str) -> int:
 interval = and_(integer, right(word(' '), integer), Interval.from_start_and_size)
 seeds = apply(set, right(word("seeds: "), separated_by(interval, ' ')))
 
-number_map_line = apply(NumberMapLine.from_list, separated_by(integer, ' '))
+number_map_line: Parser[dict[Interval, int]] = apply(lambda ints: {Interval.from_start_and_size(ints[1], ints[2]): ints[0]}, separated_by(integer, ' '))
 number_map_lines = apply(
-    lambda x: NumberMap(tuple(x)),
+    lambda x: {k: v for line in x for k, v in line.items()},
     separated_by(number_map_line, '\n')
 )
 
@@ -213,20 +213,16 @@ number_maps = apply(tuple, separated_by(number_map, '|'))
 
 
 assert seeds("seeds: 79 3 55 1").result == {Interval(79, 81), Interval(55, 55)}
-assert number_map_line("60 56 2").result == NumberMapLine(60, Range(56, 2))
-assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, Range(56, 37)),)),number_map("humidity-to-location map:\n60 56 37").result
-assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
-assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
-assert number_map("water-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
-assert number_map("seed-to-soil map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
+assert number_map_line("60 56 2").result == {Interval(56, 57): 60}
+assert number_map("humidity-to-location map:\n60 56 37").result == {Interval(56, 92): 60}
+# assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
+# assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
+# assert number_map("water-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
+# assert number_map("seed-to-soil map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
 assert number_maps("water-to-location map:\n60 56 37\n9 9 9|seed-to-soil map:\n9 9 9").result == (
-    NumberMap(
-        (NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),)
-    ),
-    NumberMap(
-        (NumberMapLine(9, Range(9, 9)),)
-    ),
-)
+    {Interval(56, 92): 60, Interval(9, 17): 9},
+    {Interval(9, 17): 9},
+), number_maps("water-to-location map:\n60 56 37\n9 9 9|seed-to-soil map:\n9 9 9").result
 assert NumberMap(tuple())[1000] == 1000
 assert NumberMap((NumberMapLine(60, Range(56, 37)),))[56] == 60, NumberMap((NumberMapLine(60, Range(56, 37)),))[56]
 assert NumberMap((NumberMapLine(60, Range(56, 37)),))[1000] == 1000
