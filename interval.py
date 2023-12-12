@@ -11,6 +11,10 @@ class Interval:
     start: int
     end: int  # inclusive
 
+    @classmethod
+    def from_start_and_size(cls, start: int, size: int) -> Interval:
+        return Interval(start, start + size - 1)
+
     def combine(self, other: Interval) -> Interval:
         return Interval(min(self.start, other.start), max(self.end, other.end))
 

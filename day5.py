@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import cached_property
 
+from interval import Interval
 from parsing import *
 from dataclasses import dataclass
 
@@ -196,8 +197,8 @@ def lowest_location(to_parse: str) -> int:
     return min(locations)
 
 
-range_ = and_(integer, right(word(' '), integer), Range)
-seeds = apply(set, right(word("seeds: "), separated_by(range_, ' ')))
+interval = and_(integer, right(word(' '), integer), Interval.from_start_and_size)
+seeds = apply(set, right(word("seeds: "), separated_by(interval, ' ')))
 
 number_map_line = apply(NumberMapLine.from_list, separated_by(integer, ' '))
 number_map_lines = apply(
@@ -211,7 +212,7 @@ number_map = right(number_map_header, number_map_lines)
 number_maps = apply(tuple, separated_by(number_map, '|'))
 
 
-assert seeds("seeds: 79 3 55 1").result == {Range(79, 3), Range(55, 1)}
+assert seeds("seeds: 79 3 55 1").result == {Interval(79, 81), Interval(55, 55)}
 assert number_map_line("60 56 2").result == NumberMapLine(60, Range(56, 2))
 assert number_map("humidity-to-location map:\n60 56 37").result == NumberMap((NumberMapLine(60, Range(56, 37)),)),number_map("humidity-to-location map:\n60 56 37").result
 assert number_map("humidity-to-location map:\n60 56 37\n9 9 9").result == NumberMap((NumberMapLine(60, Range(56, 37)), NumberMapLine(9, Range(9, 9)),))
@@ -265,8 +266,3 @@ assert number_map_1.apply_to_range(Range(30, 1)) == {Range(30, 1)}, number_map_1
 assert number_map_1.apply_to_range(Range(55, 2)) == {Range(55, 1), Range(60, 1)}
 
 assert lowest_location(example_data) == 46
-
-with open('day5_input', 'r') as f:
-    data = f.read()
-
-print(lowest_location(data))
