@@ -13,8 +13,16 @@ QQQJA 483
 
 @dataclass(frozen=True)
 class Line:
-    cards: tuple[Card]
+    cards: Hand
     bid: int
+
+
+@dataclass(frozen=True)
+class Hand:
+    cards: tuple[Card]
+
+    def __post_init__(self) -> None:
+        assert len(self.cards) == 5
 
 
 class Card(Enum):
@@ -63,7 +71,7 @@ card = apply(
     )
 )
 
-hand = apply(tuple, many(card))
+hand = apply(lambda cards: Hand(tuple(cards)), many(card))
 bid = integer
 line = and_(hand, right(word(' '), bid), lambda h, b: Line(h, b))
 lines = separated_by(line, '\n')
@@ -78,10 +86,10 @@ assert card('K').result == Card.K
 assert card('3').result == Card.THREE
 assert card('4').result == Card.FOUR
 
-assert hand('AAAAA').result == 5 * (Card.A,)
+assert hand('AAAAA').result == Hand(5 * (Card.A,))
 
-assert line('AAAAA 199').result == Line(5 * (Card.A,), bid=199)
+assert line('AAAAA 199').result == Line(Hand(5 * (Card.A,)), bid=199)
 
-assert lines('AAAAA 199\n22222 1').result == [Line(5 * (Card.A,), bid=199), Line(5 * (Card.TWO,), 1)]
+assert lines('AAAAA 199\n22222 1').result == [Line(Hand(5 * (Card.A,)), bid=199), Line(Hand(5 * (Card.TWO,)), 1)]
 
 assert main(example_data) == 6440
