@@ -90,7 +90,7 @@ def separated_by_(parser: Parser[T], separator: Parser[S]) -> Parser[list[T]]:
     return and_(
         many(left(parser, separator)),
         parser,
-        combiner=lambda ts, t: ts + [t],
+        combiner=lambda ts, t: [*ts, t],
     )
 
 
