@@ -60,8 +60,6 @@ number_maps = apply(tuple, separated_by(number_map, '|'))
 
 
 def apply_number_map(number_map: NumberMap, interval: Interval) -> set[Interval]:
-    if len(number_map) == 0:
-        return {interval}
     sub_intervals = explode(interval, intervals_to_explode_by=set(number_map))
     return {
         apply_number_map_to_sub_interval(number_map, sub_interval)
