@@ -54,7 +54,6 @@ def main(data: str) -> int:
     return res
 
 
-
 def zipwith(function: Callable[[T, S], U]) -> Callable[[Iterable[T], Iterable[S]], Iterable[U]]:
     def zipper(ts: Iterable[T], ss: Iterable[S]) -> Iterable[U]:
         for t, s in zip(ts, ss):
@@ -79,5 +78,9 @@ assert set(document('Time:    1 2 3\nDistance: 4 5  6').result) == {
     RaceParams(1, 4), RaceParams(2, 5), RaceParams(3, 6)
 }
 
-
 assert main(example_data) == 4 * 8 * 9, main(example_data)
+
+with open('day6_input', 'r') as f:
+    input_ = f.read()
+
+print(main(input_))
