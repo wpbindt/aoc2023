@@ -51,9 +51,8 @@ def lowest_location(to_parse: str) -> int:
     ])
     location_intervals = composed_number_maps(seed_intervals)
     return min({
-        location
+        interval.start
         for interval in location_intervals
-        for location in interval.to_list()
     })
 
 
@@ -134,3 +133,8 @@ assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9), Interval(100, 200)}) ==
 assert clean_up({Interval(2, 2), Interval(4, 5), Interval(5, 9)}) == {Interval(2, 2), Interval(4, 9)}
 
 assert lowest_location(example_data) == 46, lowest_location(example_data)
+
+with open('day5_input', 'r') as f:
+    data = f.read()
+
+print(lowest_location(data))
