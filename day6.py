@@ -48,10 +48,7 @@ def ways_to_win(race_params: RaceParams) -> int:
 def main(data: str) -> int:
     race_params = document(data).result
     assert not isinstance(race_params, CouldNotParse)
-    res = 1
-    for race_param in race_params:
-        res *= ways_to_win(race_param)
-    return res
+    return ways_to_win(race_params)
 
 
 def zipwith(function: Callable[[T, S], U]) -> Callable[[Iterable[T], Iterable[S]], Iterable[U]]:
@@ -63,22 +60,20 @@ def zipwith(function: Callable[[T, S], U]) -> Callable[[Iterable[T], Iterable[S]
 
 whitespace = many_plus(word(' '))
 
-values = separated_by_(integer, whitespace)
+values = apply(lambda ts: int(''.join(map(str, ts))), separated_by_(integer, whitespace))
 time_header = right(word('Time:'), whitespace)
 distance_header = right(word('Distance:'), whitespace)
 times = right(time_header, values)
 distances = right(distance_header, values)
-document = and_(times, right(word('\n'), distances), zipwith(create_race_params))
+document = and_(times, right(word('\n'), distances), create_race_params)
 
 
 assert whitespace('   ').result == [' ', ' ', ' ']
-assert times('Time:   9  10 11').result == [9, 10, 11]
-assert distances('Distance:   9  10 11').result == [9, 10, 11]
-assert set(document('Time:    1 2 3\nDistance: 4 5  6').result) == {
-    RaceParams(1, 4), RaceParams(2, 5), RaceParams(3, 6)
-}
+assert times('Time:   9  10 11').result == 91011
+assert distances('Distance:   9  10 11').result == 91011
+assert document('Time:    1 2 3\nDistance: 4 5  6').result == RaceParams(123, 456)
 
-assert main(example_data) == 4 * 8 * 9, main(example_data)
+assert main(example_data) == 71503, main(example_data)
 
 with open('day6_input', 'r') as f:
     input_ = f.read()
