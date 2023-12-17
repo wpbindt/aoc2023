@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from interval import Interval, explode
+from interval import Interval, explode, clean_up
 from parsing import *
 
 example_data = """seeds: 79 14 55 13
@@ -74,6 +74,13 @@ def apply_number_map_to_sub_interval(number_map: NumberMap, interval: Interval) 
     return interval
 
 
+def run_one_map(number_map: NumberMap, intervals: set[Interval]) -> set[Interval]:
+    return set.union(*[
+        apply_number_map(number_map, interval)
+        for interval in intervals
+    ])
+
+
 assert seeds("seeds: 79 3 55 1").result == {Interval(79, 81), Interval(55, 55)}
 assert number_map_line("60 56 2").result == {Interval(56, 57): 60}
 assert number_map("humidity-to-location map:\n60 56 37").result == {Interval(56, 92): 60}
@@ -88,5 +95,11 @@ assert apply_number_map({Interval(3, 9): 1}, Interval(3, 9)) == {Interval(4, 10)
 assert apply_number_map({Interval(100, 101): 1}, Interval(3, 9)) == {Interval(3, 9)}
 assert apply_number_map({Interval(3, 4): 1}, Interval(3, 9)) == {Interval(4, 5), Interval(5, 9)}
 assert apply_number_map({Interval(3, 4): 1}, Interval(2, 9)) == {Interval(2, 2), Interval(4, 5), Interval(5, 9)}
+assert apply_number_map({Interval(3, 4): 1, Interval(8, 9): 100}, Interval(2, 9)) == {Interval(2, 2), Interval(4, 5), Interval(5, 7), Interval(108, 109)}
+
+assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9)}) == {Interval(2, 2), Interval(4, 5), Interval(5, 9)}
+assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9), Interval(100, 200)}) == {Interval(2, 2), Interval(4, 5), Interval(5, 9), Interval(100, 200)}
+
+assert clean_up({Interval(2, 2), Interval(4, 5), Interval(5, 9)}) == {Interval(2, 2), Interval(4, 9)}
 
 assert lowest_location(example_data) == 46, lowest_location(example_data)
