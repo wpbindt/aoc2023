@@ -49,6 +49,9 @@ class Interval:
             Interval(other.end + 1, self.end)
         }
 
+    def move(self, offset: int) -> Interval:
+        return Interval(self.start + offset, self.end + offset)
+
 
 def explode(interval: Interval, intervals_to_explode_by: set[Interval]) -> set[Interval]:
     if len(intervals_to_explode_by) == 0:
