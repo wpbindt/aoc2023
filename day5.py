@@ -87,5 +87,6 @@ assert apply_number_map({Interval(3, 9): 1}, Interval(3, 9)) == {Interval(4, 10)
 assert apply_number_map({Interval(3, 9): 1}, Interval(3, 9)) == {Interval(4, 10)}
 assert apply_number_map({Interval(100, 101): 1}, Interval(3, 9)) == {Interval(3, 9)}
 assert apply_number_map({Interval(3, 4): 1}, Interval(3, 9)) == {Interval(4, 5), Interval(5, 9)}
+assert apply_number_map({Interval(3, 4): 1}, Interval(2, 9)) == {Interval(2, 2), Interval(4, 5), Interval(5, 9)}
 
 assert lowest_location(example_data) == 46, lowest_location(example_data)
