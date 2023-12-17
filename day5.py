@@ -75,10 +75,12 @@ def apply_number_map_to_sub_interval(number_map: NumberMap, interval: Interval) 
 
 
 def run_one_map(number_map: NumberMap, intervals: set[Interval]) -> set[Interval]:
-    return set.union(*[
-        apply_number_map(number_map, interval)
-        for interval in intervals
-    ])
+    return clean_up(
+        set.union(*[
+            apply_number_map(number_map, interval)
+            for interval in intervals
+        ])
+    )
 
 
 assert seeds("seeds: 79 3 55 1").result == {Interval(79, 81), Interval(55, 55)}
@@ -97,8 +99,8 @@ assert apply_number_map({Interval(3, 4): 1}, Interval(3, 9)) == {Interval(4, 5),
 assert apply_number_map({Interval(3, 4): 1}, Interval(2, 9)) == {Interval(2, 2), Interval(4, 5), Interval(5, 9)}
 assert apply_number_map({Interval(3, 4): 1, Interval(8, 9): 100}, Interval(2, 9)) == {Interval(2, 2), Interval(4, 5), Interval(5, 7), Interval(108, 109)}
 
-assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9)}) == {Interval(2, 2), Interval(4, 5), Interval(5, 9)}
-assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9), Interval(100, 200)}) == {Interval(2, 2), Interval(4, 5), Interval(5, 9), Interval(100, 200)}
+assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9)}) == {Interval(2, 2), Interval(4, 9)}
+assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9), Interval(100, 200)}) == {Interval(2, 2), Interval(4, 9), Interval(100, 200)}
 
 assert clean_up({Interval(2, 2), Interval(4, 5), Interval(5, 9)}) == {Interval(2, 2), Interval(4, 9)}
 
