@@ -103,7 +103,6 @@ def apply_number_map_to_sub_interval(number_map: NumberMap, interval: Interval) 
     return interval
 
 
-@log_result
 def run_one_map(number_map: NumberMap, intervals: set[Interval]) -> set[Interval]:
     return clean_up(
         set.union(*[
@@ -134,5 +133,4 @@ assert run_one_map({Interval(3, 4): 1}, {Interval(2, 9), Interval(100, 200)}) ==
 
 assert clean_up({Interval(2, 2), Interval(4, 5), Interval(5, 9)}) == {Interval(2, 2), Interval(4, 9)}
 
-print(300 * '-')
 assert lowest_location(example_data) == 46, lowest_location(example_data)
