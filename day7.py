@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from collections import Counter
 from enum import Enum
+from functools import cached_property
 from itertools import count
 
 from parsing import *
@@ -38,11 +39,11 @@ class Hand:
     def __post_init__(self) -> None:
         assert len(self.cards) == 5, self.cards
 
-    @property
+    @cached_property
     def card_counts(self) -> Counter[int]:
         return Counter(Counter(self.cards).values())
 
-    @property
+    @cached_property
     def type(self) -> HandType:
         if self.card_counts == {5: 1}:
             return HandType.FIVE
