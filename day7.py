@@ -1,14 +1,28 @@
 from __future__ import annotations
-from enum import Enum, auto
+
+import time
+from collections import Counter
+from enum import Enum
+from itertools import count
+
 from parsing import *
 from dataclasses import dataclass
 
-example_data = """32T3K 765
-T55J5 684
-KK677 28
-KTJJT 220
-QQQJA 483
-"""
+example_data = "32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483"
+
+
+class HandType(Enum):
+    FIVE = 9
+    FOUR = 8
+    FULL_HOUSE = 7
+    THREE = 6
+    TWO = 5
+    ONE = 4
+    HIGH = 3
+    OTHER = 0
+
+    def __le__(self, other: HandType) -> bool:
+        return self.value <= other.value
 
 
 @dataclass(frozen=True)
@@ -22,15 +36,35 @@ class Hand:
     cards: tuple[Card, ...]
 
     def __post_init__(self) -> None:
-        assert len(self.cards) == 5
+        assert len(self.cards) == 5, self.cards
 
-    def is_5_kind(self) -> bool:
-        return len(set(self.cards)) == 1
+    @property
+    def card_counts(self) -> Counter[int]:
+        return Counter(Counter(self.cards).values())
+
+    @property
+    def type(self) -> HandType:
+        if self.card_counts == {5: 1}:
+            return HandType.FIVE
+        if self.card_counts == {4: 1, 1: 1}:
+            return HandType.FOUR
+        if self.card_counts == {2: 1, 3: 1}:
+            return HandType.FULL_HOUSE
+        if 3 in self.card_counts:
+            return HandType.THREE
+        if self.card_counts == {2: 2, 1: 1}:
+            return HandType.TWO
+        if self.card_counts == {2: 1, 1: 3}:
+            return HandType.ONE
+        return HandType.HIGH
 
     def __le__(self, other: Hand) -> bool:
-        if self.is_5_kind() and not other.is_5_kind():
-            return False
-        return True
+        if self.type == other.type:
+            return self.cards <= other.cards
+        return self.type <= other.type
+
+    def __lt__(self, other: Hand) -> bool:
+        return self <= other and self != other
 
 
 class Card(Enum):
@@ -54,6 +88,9 @@ class Card(Enum):
         if string.isdigit():
             return digits_list[int(string) - 2]
         return Card[string]
+
+    def __le__(self, other: Card) -> bool:
+        return self.value <= other.value
 
 
 digits_list = [
@@ -82,11 +119,24 @@ card = apply(
 hand = apply(lambda cards: Hand(tuple(cards)), many(card))
 bid = integer
 line = and_(hand, right(word(' '), bid), lambda h, b: Line(h, b))
-lines = separated_by(line, '\n')
+
+
+def main_parsed(hands: list[Line]) -> int:
+    sorted_hands = sorted(hands, key=lambda hand: hand.cards)
+    return sum(
+        rank * line.bid
+        for rank, line in zip(count(1), sorted_hands)
+    )
 
 
 def main(to_parse: str) -> int:
-    pass
+    lines = to_parse.split('\n')
+    return main_parsed(
+        [
+            line(line_).result
+            for line_ in lines
+        ]
+    )
 
 
 assert card('A').result == Card.A
@@ -98,9 +148,33 @@ assert hand('AAAAA').result == Hand(5 * (Card.A,))
 
 assert line('AAAAA 199').result == Line(Hand(5 * (Card.A,)), bid=199)
 
-assert lines('AAAAA 199\n22222 1').result == [Line(Hand(5 * (Card.A,)), bid=199), Line(Hand(5 * (Card.TWO,)), 1)]
-
-assert Hand(5 * (Card.A,)) <= Hand(5 * (Card.A,))
-assert not (Hand(5 * (Card.A,)) <= Hand((Card.A, Card.A, Card.A, Card.A, Card.K)))
+five_of_a_kind = Hand(5 * (Card.A,))
+four_of_a_kind = Hand((Card.A, Card.A, Card.A, Card.A, Card.K))
+four_of_a_kind_different_order = Hand((Card.K, Card.A, Card.A, Card.A, Card.A))
+three_of_a_kind = Hand((Card.A, Card.A, Card.A, Card.Q, Card.K))
+two_pair = Hand((Card.A, Card.A, Card.Q, Card.Q, Card.K))
+one_pair = Hand((Card.A, Card.A, Card.J, Card.Q, Card.K))
+high_card = Hand((Card.A, Card.T, Card.J, Card.Q, Card.K))
+full_house = Hand((Card.A, Card.A, Card.A, Card.K, Card.K))
+assert five_of_a_kind <= five_of_a_kind
+assert not five_of_a_kind <= four_of_a_kind
+assert four_of_a_kind <= five_of_a_kind
+assert full_house <= four_of_a_kind
+assert not four_of_a_kind <= full_house
+assert three_of_a_kind <= full_house
+assert not full_house <= three_of_a_kind
+assert two_pair <= three_of_a_kind
+assert not three_of_a_kind <= two_pair
+assert one_pair <= two_pair
+assert not two_pair <= one_pair
+assert high_card <= one_pair
+assert not one_pair <= high_card
+assert not four_of_a_kind <= four_of_a_kind_different_order
 
 assert main(example_data) == 6440
+
+with open('day7_input', 'r') as f:
+    start = time.perf_counter()
+    print(main(f.read()))
+    end = time.perf_counter()
+    print(end - start)
