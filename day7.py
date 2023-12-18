@@ -1,5 +1,5 @@
 from __future__ import annotations
-from enum import Enum
+from enum import Enum, auto
 from parsing import *
 from dataclasses import dataclass
 
@@ -19,10 +19,18 @@ class Line:
 
 @dataclass(frozen=True)
 class Hand:
-    cards: tuple[Card]
+    cards: tuple[Card, ...]
 
     def __post_init__(self) -> None:
         assert len(self.cards) == 5
+
+    def is_5_kind(self) -> bool:
+        return len(set(self.cards)) == 1
+
+    def __le__(self, other: Hand) -> bool:
+        if self.is_5_kind() and not other.is_5_kind():
+            return False
+        return True
 
 
 class Card(Enum):
@@ -91,5 +99,8 @@ assert hand('AAAAA').result == Hand(5 * (Card.A,))
 assert line('AAAAA 199').result == Line(Hand(5 * (Card.A,)), bid=199)
 
 assert lines('AAAAA 199\n22222 1').result == [Line(Hand(5 * (Card.A,)), bid=199), Line(Hand(5 * (Card.TWO,)), 1)]
+
+assert Hand(5 * (Card.A,)) <= Hand(5 * (Card.A,))
+assert not (Hand(5 * (Card.A,)) <= Hand((Card.A, Card.A, Card.A, Card.A, Card.K)))
 
 assert main(example_data) == 6440
