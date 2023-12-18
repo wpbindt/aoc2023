@@ -40,22 +40,26 @@ class Hand:
         assert len(self.cards) == 5, self.cards
 
     @cached_property
-    def card_counts(self) -> Counter[int]:
+    def _card_counts(self) -> Counter[int]:
         return Counter(Counter(self.cards).values())
 
     @cached_property
+    def _non_joker_card_counts(self) -> Counter[int]:
+        return Counter(Counter([card for card in self.cards if card != Card.J]).values())
+
+    @cached_property
     def type(self) -> HandType:
-        if self.card_counts == {5: 1}:
+        if self._card_counts == {5: 1} or self._non_joker_card_counts == {4: 1}:
             return HandType.FIVE
-        if self.card_counts == {4: 1, 1: 1}:
+        if self._card_counts == {4: 1, 1: 1}:
             return HandType.FOUR
-        if self.card_counts == {2: 1, 3: 1}:
+        if self._card_counts == {2: 1, 3: 1}:
             return HandType.FULL_HOUSE
-        if 3 in self.card_counts:
+        if 3 in self._card_counts:
             return HandType.THREE
-        if self.card_counts == {2: 2, 1: 1}:
+        if self._card_counts == {2: 2, 1: 1}:
             return HandType.TWO
-        if self.card_counts == {2: 1, 1: 3}:
+        if self._card_counts == {2: 1, 1: 3}:
             return HandType.ONE
         return HandType.HIGH
 
@@ -69,6 +73,7 @@ class Hand:
 
 
 class Card(Enum):
+    J = -1
     TWO = 0
     THREE = 1
     FOUR = 2
@@ -78,7 +83,6 @@ class Card(Enum):
     EIGHT = 6
     NINE = 7
     T = 8
-    J = 9
     Q = 10
     K = 11
     A = 12
@@ -172,7 +176,10 @@ assert high_card <= one_pair
 assert not one_pair <= high_card
 assert not four_of_a_kind <= four_of_a_kind_different_order
 
-assert main(example_data) == 6440
+assert Card.J <= Card.TWO
+assert Hand((Card.A, Card.A, Card.A, Card.A, Card.J)).type == HandType.FIVE
+
+assert main(example_data) == 5905
 
 with open('day7_input', 'r') as f:
     start = time.perf_counter()
