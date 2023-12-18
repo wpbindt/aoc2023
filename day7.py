@@ -128,10 +128,6 @@ line = and_(hand, right(word(' '), bid), lambda h, b: Line(h, b))
 
 def main_parsed(hands: list[Line]) -> int:
     sorted_hands = sorted(hands, key=lambda hand: hand.cards)
-    for hand in sorted_hands:
-        print(30 * '-')
-        print(hand.cards)
-        print(hand.cards.type)
     return sum(
         rank * line.bid
         for rank, line in zip(count(1), sorted_hands)
