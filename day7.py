@@ -49,17 +49,17 @@ class Hand:
 
     @cached_property
     def type(self) -> HandType:
-        if self._card_counts == {5: 1} or self._non_joker_card_counts == {4: 1}:
+        if self._non_joker_card_counts in ({4: 1}, {3: 1}, {2: 1}, {1: 1}, {5: 1}, {}):
             return HandType.FIVE
-        if self._card_counts == {4: 1, 1: 1}:
+        if self._non_joker_card_counts in ({3: 1, 1: 1}, {2: 1, 1: 1}, {1: 2}) or self._card_counts.get(4) == 1:
             return HandType.FOUR
-        if self._card_counts == {2: 1, 3: 1}:
+        if self._card_counts == {2: 1, 3: 1} or self._non_joker_card_counts == {2: 2}:
             return HandType.FULL_HOUSE
-        if 3 in self._card_counts:
+        if 3 in self._card_counts or self._non_joker_card_counts in ({2: 1, 1: 2}, {1: 3}):
             return HandType.THREE
         if self._card_counts == {2: 2, 1: 1}:
             return HandType.TWO
-        if self._card_counts == {2: 1, 1: 3}:
+        if self._card_counts == {2: 1, 1: 3} or self._non_joker_card_counts == {1: 4}:
             return HandType.ONE
         return HandType.HIGH
 
@@ -128,6 +128,10 @@ line = and_(hand, right(word(' '), bid), lambda h, b: Line(h, b))
 
 def main_parsed(hands: list[Line]) -> int:
     sorted_hands = sorted(hands, key=lambda hand: hand.cards)
+    for hand in sorted_hands:
+        print(30 * '-')
+        print(hand.cards)
+        print(hand.cards.type)
     return sum(
         rank * line.bid
         for rank, line in zip(count(1), sorted_hands)
@@ -158,8 +162,8 @@ four_of_a_kind = Hand((Card.A, Card.A, Card.A, Card.A, Card.K))
 four_of_a_kind_different_order = Hand((Card.K, Card.A, Card.A, Card.A, Card.A))
 three_of_a_kind = Hand((Card.A, Card.A, Card.A, Card.Q, Card.K))
 two_pair = Hand((Card.A, Card.A, Card.Q, Card.Q, Card.K))
-one_pair = Hand((Card.A, Card.A, Card.J, Card.Q, Card.K))
-high_card = Hand((Card.A, Card.T, Card.J, Card.Q, Card.K))
+one_pair = Hand((Card.A, Card.A, Card.TWO, Card.Q, Card.K))
+high_card = Hand((Card.A, Card.T, Card.TWO, Card.Q, Card.K))
 full_house = Hand((Card.A, Card.A, Card.A, Card.K, Card.K))
 assert five_of_a_kind <= five_of_a_kind
 assert not five_of_a_kind <= four_of_a_kind
@@ -178,6 +182,13 @@ assert not four_of_a_kind <= four_of_a_kind_different_order
 
 assert Card.J <= Card.TWO
 assert Hand((Card.A, Card.A, Card.A, Card.A, Card.J)).type == HandType.FIVE
+assert Hand((Card.J, Card.J, Card.J, Card.J, Card.J)).type == HandType.FIVE
+assert Hand((Card.A, Card.A, Card.A, Card.K, Card.J)).type == HandType.FOUR
+assert Hand((Card.A, Card.A, Card.J, Card.K, Card.J)).type == HandType.FOUR
+assert Hand((Card.A, Card.A, Card.J, Card.K, Card.K)).type == HandType.FULL_HOUSE
+assert Hand((Card.A, Card.A, Card.J, Card.K, Card.Q)).type == HandType.THREE
+assert Hand((Card.A, Card.J, Card.J, Card.K, Card.Q)).type == HandType.THREE
+assert Hand((Card.A, Card.T, Card.J, Card.K, Card.Q)).type == HandType.ONE
 
 assert main(example_data) == 5905
 
