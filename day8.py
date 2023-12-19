@@ -1,4 +1,5 @@
 from ast import literal_eval
+from math import lcm
 from typing import Iterator
 from itertools import cycle, count
 
@@ -24,9 +25,29 @@ def traverse(starting_point: str) -> Iterator[str]:
         yield current
 
 
-traversals = map(traverse, starting_points)
+def detect_cycle(starting_node):
+    last_score = 0
+    previous_difference = 0
+    for score, node in zip(count(1), traverse(starting_node)):
+        if node.endswith('Z'):
+            difference = score - last_score
+            print(f'{score=}')
+            print(score - last_score)
+            last_score = score
+            if difference == previous_difference:
+                return difference
+            previous_difference = difference
 
-for score, *itineraries in zip(count(1), *traversals):
-    if all(node.endswith('Z') for node in itineraries):
-        print(score)
-        break
+
+traversals = map(traverse, starting_points)
+bops = []
+for node in starting_points:
+    print(node)
+    bops.append(detect_cycle(node))
+
+print(bops)
+print(lcm(*bops))
+# for score, *itineraries in zip(count(1), *traversals):
+#     if all(node.endswith('Z') for node in itineraries):
+#         print(score)
+#         break
