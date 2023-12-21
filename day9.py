@@ -5,7 +5,11 @@ from fractions import Fraction
 from functools import wraps, lru_cache
 from typing import Callable, TypeVar
 
+from parsing import separated_by, integer
+
 T = TypeVar('T')
+
+example_data = """0 3 6 9 12 15\n1 3 6 10 15 21\n10 13 16 21 30 45"""
 
 
 @lru_cache(maxsize=None)
@@ -68,20 +72,38 @@ def pascal_identity(nk: tuple[int, int]) -> None:
 
 def extrapolate(row: list[int]) -> int:
     reversed_row = list(reversed(row))
-    return sum(
+    result = sum(
         sum(
-            ((-1) ** j) * binom(i, j) * reversed_row[j]
+            ((-1) ** (j + 1)) * binom(i, j) * reversed_row[j - 1]
             for j in range(i + 1)
         )
         for i in range(len(row) + 1)
     )
+    print(result)
+    return result
 
 
-def main(rows: list[list[int]]) -> int:
+def main_parsed(rows: list[list[int]]) -> int:
     return sum(
         extrapolate(row)
         for row in rows
     )
+
+
+integers = separated_by(integer, ' ')
+
+
+def main(to_parse: str) -> int:
+    lines = to_parse.split('\n')
+    parsed = [
+        integers(line).result
+        for line in lines
+    ]
+    print(parsed)
+    return main_parsed(parsed)
+
+
+assert main(example_data) == 114
 
 
 if __name__ == '__main__':
