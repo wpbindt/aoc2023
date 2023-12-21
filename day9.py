@@ -74,10 +74,10 @@ def extrapolate(row: list[int]) -> int:
     reversed_row = list(reversed(row))
     result = sum(
         sum(
-            ((-1) ** (j + 1)) * binom(i, j) * reversed_row[j - 1]
-            for j in range(i + 1)
+            ((-1) ** j) * binom(i, j) * reversed_row[j]
+            for j in range(i)
         )
-        for i in range(len(row) + 1)
+        for i in range(len(row))
     )
     print(result)
     return result
