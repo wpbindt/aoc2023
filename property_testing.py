@@ -8,6 +8,11 @@ T = TypeVar('T')
 Ts = TypeVarTuple("Ts")
 
 
+class PropertyTestFailure(Exception):
+    def __init__(self, dependency: str) -> None:
+        self.dependencies = [dependency]
+
+
 def inject(
     dependency: Callable[[], T],
 ) -> Callable[
@@ -19,18 +24,26 @@ def inject(
     ) -> Callable[[*Ts], None]:
         @wraps(property_test)
         def curried_test(*remaining_dependencies: *Ts) -> None:
-            property_test(dependency(), *remaining_dependencies)
+            injected_dependency = dependency()
+            try:
+                property_test(injected_dependency, *remaining_dependencies)
+            except AssertionError as e:
+                raise PropertyTestFailure(str(injected_dependency)) from e
+            except PropertyTestFailure as e:
+                e.dependencies.append(str(injected_dependency))
+                raise
+
         return curried_test
     return decorator
 
 
-def run_property_test(property_test: Callable[[], None]) -> None:
+def run_property_test(property_test: Callable[[], None | str]) -> None:
     print(f'Running {property_test.__name__}')
     for _ in range(1000):
         try:
             property_test()
-        except AssertionError:
-            print('F')
+        except PropertyTestFailure as e:
+            print(f'F, arguments: {e.dependencies}')
             break
     else:
         print('.')
