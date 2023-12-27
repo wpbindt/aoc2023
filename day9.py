@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import random
 from fractions import Fraction
-from functools import wraps, lru_cache
-from typing import Callable, TypeVar
+from functools import lru_cache
+from typing import TypeVar
 
 from parsing import separated_by, integer
+from property_testing import inject
 
 T = TypeVar('T')
 
@@ -23,27 +24,6 @@ def binom(n: int, k: int) -> int:
     return int(frac_binom(n, k))
 
 
-hypotheses = set()
-
-
-def hypothesis(
-        argument_generator: Callable[[], T],
-        iterations: int = 10000,
-) -> Callable[[Callable[[T], None]], Callable[[T], None]]:
-    def decorator(f: Callable[[T], None]) -> Callable[[], None]:
-        @wraps(f)
-        def wrapped() -> None:
-            print(f'testing {f.__name__}')
-            test_data = (argument_generator() for _ in range(iterations))
-            for ix, datum in enumerate(test_data):
-                if ix % 1000 == 0:
-                    print(f'iteration {ix} out of {iterations}')
-                f(datum)
-        hypotheses.add(wrapped)
-        return f
-    return decorator
-
-
 def generate_nonnegative_integer() -> int:
     return random.randint(0, 200)
 
@@ -54,18 +34,18 @@ def generate_positive_binomial_argument() -> tuple[int, int]:
     return n, k
 
 
-@hypothesis(generate_nonnegative_integer)
-def binomial_with_0_bottom_is_1(n: int) -> None:
+@inject(generate_nonnegative_integer)
+def property_test_binomial_with_0_bottom_is_1(n: int) -> None:
     assert binom(n, 0) == 1
 
 
-@hypothesis(generate_nonnegative_integer)
-def binomial_with_n_bottom_is_1(n: int) -> None:
+@inject(generate_nonnegative_integer)
+def property_test_binomial_with_n_bottom_is_1(n: int) -> None:
     assert binom(n, n) == 1
 
 
-@hypothesis(generate_positive_binomial_argument)
-def pascal_identity(nk: tuple[int, int]) -> None:
+@inject(generate_positive_binomial_argument)
+def property_test_pascal_identity(nk: tuple[int, int]) -> None:
     n, k = nk
     assert binom(n, k) == binom(n - 1, k - 1) + binom(n - 1, k)
 
@@ -103,9 +83,5 @@ def main(to_parse: str) -> int:
     return main_parsed(parsed)
 
 
-assert main(example_data) == 114
-
-
 if __name__ == '__main__':
-    for hypo in hypotheses:
-        hypo()
+    assert main(example_data) == 114
