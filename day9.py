@@ -51,10 +51,9 @@ def property_test_pascal_identity(nk: tuple[int, int]) -> None:
 
 
 def extrapolate(row: list[int]) -> int:
-    reversed_row = list(reversed(row))
     summands = [
-        sum(
-            ((-1) ** j) * binom(i, j) * reversed_row[j]
+        ((-1) ** i) * sum(
+            ((-1) ** (j)) * binom(i, j) * row[i - j]
             for j in range(i + 1)
         )
         for i in range(len(row))
@@ -71,12 +70,6 @@ def main_parsed(rows: list[list[int]]) -> int:
 
 integers = separated_by(integer, ' ')
 
-row = [10, 16, 22]
-assert extrapolate(row) == 28, extrapolate(row)
-
-row = [0, 3, 6, 9, 12, 15]
-assert extrapolate(row) == 18, extrapolate(row)
-
 
 def main(to_parse: str) -> int:
     lines = to_parse.split('\n')
@@ -84,9 +77,11 @@ def main(to_parse: str) -> int:
         integers(line).result
         for line in lines
     ]
-    return main_parsed(parsed)
+    result = main_parsed(parsed)
+    print(result)
+    return result
 
-assert main(example_data) == 114
+assert main(example_data) == 2
 
 with open('day9_input') as f:
     to_parse = f.read()
