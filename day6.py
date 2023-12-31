@@ -60,7 +60,7 @@ def zipwith(function: Callable[[T, S], U]) -> Callable[[Iterable[T], Iterable[S]
 
 whitespace = many_plus(word(' '))
 
-values = apply(lambda ts: int(''.join(map(str, ts))), separated_by_(integer, whitespace))
+values = apply(lambda ts: int(''.join(map(str, ts))), separated_by_(nonnegative_integer, whitespace))
 time_header = right(word('Time:'), whitespace)
 distance_header = right(word('Distance:'), whitespace)
 times = right(time_header, values)

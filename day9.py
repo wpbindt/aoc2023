@@ -6,7 +6,7 @@ from functools import lru_cache
 from typing import TypeVar
 
 from parsing import separated_by, integer
-from property_testing import inject
+from property_based_testing.api import inject
 
 T = TypeVar('T')
 
@@ -52,15 +52,14 @@ def property_test_pascal_identity(nk: tuple[int, int]) -> None:
 
 def extrapolate(row: list[int]) -> int:
     reversed_row = list(reversed(row))
-    result = sum(
+    summands = [
         sum(
             ((-1) ** j) * binom(i, j) * reversed_row[j]
-            for j in range(i)
+            for j in range(i + 1)
         )
         for i in range(len(row))
-    )
-    print(result)
-    return result
+    ]
+    return sum(summands)
 
 
 def main_parsed(rows: list[list[int]]) -> int:
@@ -72,6 +71,12 @@ def main_parsed(rows: list[list[int]]) -> int:
 
 integers = separated_by(integer, ' ')
 
+row = [10, 16, 22]
+assert extrapolate(row) == 28, extrapolate(row)
+
+row = [0, 3, 6, 9, 12, 15]
+assert extrapolate(row) == 18, extrapolate(row)
+
 
 def main(to_parse: str) -> int:
     lines = to_parse.split('\n')
@@ -79,9 +84,11 @@ def main(to_parse: str) -> int:
         integers(line).result
         for line in lines
     ]
-    print(parsed)
     return main_parsed(parsed)
 
+assert main(example_data) == 114
 
-if __name__ == '__main__':
-    assert main(example_data) == 114
+with open('day9_input') as f:
+    to_parse = f.read()
+
+print(main(to_parse))

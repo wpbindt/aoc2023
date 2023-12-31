@@ -122,7 +122,7 @@ card = apply(
 )
 
 hand = apply(lambda cards: Hand(tuple(cards)), many(card))
-bid = integer
+bid = nonnegative_integer
 line = and_(hand, right(word(' '), bid), lambda h, b: Line(h, b))
 
 

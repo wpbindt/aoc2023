@@ -71,10 +71,10 @@ def log_result(f):
     return decorated
 
 
-interval = and_(integer, right(word(' '), integer), Interval.from_start_and_size)
+interval = and_(nonnegative_integer, right(word(' '), nonnegative_integer), Interval.from_start_and_size)
 seeds = apply(set, right(word("seeds: "), separated_by(interval, ' ')))
 
-number_map_line: Parser[dict[Interval, int]] = apply(lambda ints: {Interval.from_start_and_size(ints[1], ints[2]): ints[0] - ints[1]}, separated_by(integer, ' '))
+number_map_line: Parser[dict[Interval, int]] = apply(lambda ints: {Interval.from_start_and_size(ints[1], ints[2]): ints[0] - ints[1]}, separated_by(nonnegative_integer, ' '))
 number_map_lines = apply(
     lambda x: {interval_: offset for line in x for interval_, offset in line.items()},
     separated_by(number_map_line, '\n')

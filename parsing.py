@@ -145,4 +145,10 @@ def apply(
         return ParseResult(result=function(result.result), remainder=result.remainder)
     return parser_
 
-integer = apply(int, apply(''.join, many_plus(digit)))
+nonnegative_integer = apply(int, apply(''.join, many_plus(digit)))
+nonpositive_integer = apply(lambda x: -x, right(word('-'), nonnegative_integer))
+
+integer = or_(
+    nonnegative_integer,
+    nonpositive_integer,
+)
