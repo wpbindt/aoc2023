@@ -1,0 +1,53 @@
+.................P..............
+......F-----7...P......7F7......
+......|.....|..........|||......
+......|..F--JO.....||..LJL......
+......|..|.F7F7.....L-..........
+......S..L-JLJ|...-7F.......J|..
+......|.....F-J....|........-J..
+......L-----J.....
+..................
+...|.J.7.L.F.-....
+..................
+...|J.|7.|-. possible:.|L.|F.||.   all vertical passages
+...J7.J-.JJ..possible:.J|.JL.JF.   "
+...7J.7-.77..possible:.7|.7L.7F.   "
+...LL.L|.LF..possible:.L-.LJ.L7.   not passages
+
+First part:
+    vertices: all pipes, and S
+    edges: S connects to all adjacent pipes that connect
+           - connects to east if east in -, J, 7
+                         west if west in -, F, L 
+           | connects to north if north in |, F, 7
+                         west if south in |, J, L 
+           etc.
+
+---> -.connecting directions: EW
+     J.connecting directions: NW
+     etc.
+    
+     D <- {E, W, N, S}, -E = W, -N = S, etc
+     pipe connects to D if D tile has pipe with connecting directions containing -D
+
+graph traversal, start from S. Count discovered nodes, divide by 2.
+
+
+Second part:
+     loop pipe is said to be (E/W)HNC if there is a loop piece to the E/W which does not connect
+     loop pipe is said to be (N/S)VNC if there is a loop piece to the N/S which does not connect
+     loop pipe is DNC if there is a piece to the NE, NW, SE, SW which does not connect
+
+     note that a pipe can be both HNC and VNC at the same time, as well as EHNC and WHNC at the same time
+
+Vertices: all non-loop tiles, all HNC and VNC loop tiles
+
+Edges:    non-loop tile: connect to everything horizontally/vertically adjacent, except loop tiles (which includes S)
+          EHNC loop pipe: connect to N, S, NE, SE
+          WHNC loop pipe: connect to N, S, NW, SW
+          NVNC loop pipe: connect to W, E, NW, NE
+          SVNC loop pipe: connect to W, E, SW, SE
+          for every DNC: connect any two diagonally connected non-loop neighbors
+
+Starting at all vertices around the edge, do graph traversal. Count all non-loop undiscovered vertices
+

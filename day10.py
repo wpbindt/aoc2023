@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from time import perf_counter
 from typing import Iterator
 from dataclasses import dataclass
 from itertools import count
@@ -239,10 +240,14 @@ def main(to_parse: str) -> list[int]:
     paths = []
     for neighbor in start_node._neighbors:
         paths.append(list(start_node.traverse(neighbor)))
+        break
     return [len(path) // 2 for path in paths]
 
 
 with open('day10_inputr', 'r') as f:
     to_parse = f.read()
 
+start = perf_counter()
 print(main(to_parse))
+
+print(perf_counter() - start)

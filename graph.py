@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TypeVar, Generic, Callable
+from typing import TypeVar, Generic, Callable, Hashable, Optional, Iterator
 from uuid import uuid4
 
 T = TypeVar('T')
 
 
 class Node(Generic[T]):
-    def __init__(self, payload: T) -> None:
+    def __init__(self, payload: T, id_: Optional[Hashable] = None) -> None:
         self.payload = payload
-        self._id = uuid4()
+        self._id = id_ or uuid4()
         self.traversal_state = TraversalState.UNDISCOVERED
 
     def __hash__(self) -> int:
@@ -41,12 +41,12 @@ class Graph(Generic[T]):
     def traverse_from(
         self,
         start: Node[T],
-        function: Callable[[T], None],
-    ) -> None:
+    ) -> Iterator[Node[T]]:
         discovered_nodes = {start}
-        while discovered_nodes:
+        while len(discovered_nodes) > 0:
             current = discovered_nodes.pop()
-            function(current.payload)
+            yield current
+
             for node in self._nodes[current]:
                 if node.traversal_state != TraversalState.UNDISCOVERED:
                     continue
