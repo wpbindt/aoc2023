@@ -10,11 +10,11 @@ T = TypeVar('T')
 class Node(Generic[T]):
     def __init__(self, payload: T, id_: Optional[Hashable] = None) -> None:
         self.payload = payload
-        self._id = id_ or uuid4()
+        self.id = id_ or uuid4()
         self.traversal_state = TraversalState.UNDISCOVERED
 
     def __hash__(self) -> int:
-        return hash(self._id)
+        return hash(self.id)
 
     def __eq__(self, other: Node[T]) -> bool:
         return hash(self) == hash(other)
@@ -25,33 +25,35 @@ class TraversalState(Enum):
     DISCOVERED = 1
     UNDISCOVERED = 2
 
+NodeId = Hashable
 
 class Graph(Generic[T]):
     def __init__(self, nodes: set[Node[T]]) -> None:
-        self._nodes: dict[Node[T], set[Node[T]]] = {node: set() for node in nodes}
+        self._nodes: dict[NodeId, Node[T]] = {node.id: node for node in nodes}
+        self._edges: dict[NodeId, set[Node[T]]] = {node.id: set() for node in nodes}
 
     def insert_edge(
         self,
-        node_1: Node[T],
-        node_2: Node[T],
+        node_1: NodeId,
+        node_2: NodeId,
     ) -> None:
-        self._nodes[node_1].add(node_2)
-        self._nodes[node_2].add(node_1)
+        self._edges[node_1].add(self._nodes[node_2])
+        self._edges[node_2].add(self._nodes[node_1])
 
     def traverse_from(
         self,
-        start: Node[T],
+        start: NodeId,
     ) -> Iterator[Node[T]]:
-        discovered_nodes = {start}
+        discovered_nodes: set[Node[T]] = {self._nodes[start]}
         while len(discovered_nodes) > 0:
             current = discovered_nodes.pop()
             yield current
 
-            for node in self._nodes[current]:
-                if node.traversal_state != TraversalState.UNDISCOVERED:
+            for connecting_node in self._edges[current.id]:
+                if connecting_node.traversal_state != TraversalState.UNDISCOVERED:
                     continue
-                node.traversal_state = TraversalState.DISCOVERED
-                discovered_nodes.add(node)
+                connecting_node.traversal_state = TraversalState.DISCOVERED
+                discovered_nodes.add(connecting_node)
             current.traversal_state = TraversalState.PROCESSED
 
 

@@ -87,25 +87,39 @@ def iterate_grid(grid: list[list[T]]) -> Iterator[tuple[GridCoordinate, T]]:
             yield GridCoordinate(x, y), element
 
 
-def graph_from_connecting_grid_elements(grid: list[list[ConnectingGridElement]]) -> tuple[Graph, Node]:
-    nodes: dict[GridCoordinate, Node[ConnectingGridElement]] = {
-        coordinate: Node(payload=element, id_=coordinate)
-        for coordinate, element in iterate_grid(grid)
-    }
-    graph = Graph(set(nodes.values()))
+def get_element(grid: list[list[T]], coordinate: GridCoordinate) -> T | None:
+    if -1 in {coordinate.x, coordinate.y}:
+        return None
+    try:
+        return grid[coordinate.y][coordinate.x]
+    except IndexError:
+        return None
 
-    start_node = Node('x')
-    for coordinate, node in nodes.items():
-        if len(node.payload.connecting_directions) == 4:
-            start_node = node
-        for direction in node.payload.connecting_directions:
-            neighboring_node = nodes.get(direction + coordinate)
-            if neighboring_node is None:
+
+def get_neighbor(grid: list[list[T]], coordinate: GridCoordinate, direction: Direction) -> T | None:
+    return get_element(grid, direction + coordinate)
+
+
+def get_edges(grid: list[list[ConnectingGridElement]]) -> Iterator[tuple[GridCoordinate, GridCoordinate]]:
+    for coordinate, element in iterate_grid(grid):
+        for connecting_direction in element.connecting_directions:
+            neighbor = get_neighbor(grid, coordinate, connecting_direction)
+            if neighbor is None:
                 continue
-            if direction.opposite() in neighboring_node.payload.connecting_directions:
-                graph.insert_edge(node, neighboring_node)
+            if connecting_direction.opposite() in neighbor.connecting_directions:
+                yield coordinate, connecting_direction + coordinate
 
-    return graph, start_node
+
+def graph_from_connecting_grid_elements(grid: list[list[ConnectingGridElement]]) -> Graph:
+    nodes = {
+        Node(id_=coordinate, payload=None)
+        for coordinate, _ in iterate_grid(grid)
+    }
+    graph = Graph(nodes=nodes)
+    for edge in get_edges(grid):
+        graph.insert_edge(*edge)
+
+    return graph
 
 
 north_south = apply(lambda x: ConnectingGridElement({North(), South()}), word('|'))
@@ -133,7 +147,8 @@ def main(to_parse: str) -> int:
     parsed = grid(to_parse)
     if isinstance(parsed, CouldNotParse):
         raise Exception
-    graph, start_node = graph_from_connecting_grid_elements(parsed.result)
+    graph = graph_from_connecting_grid_elements(parsed.result)
+    start_node = GridCoordinate(x=75, y=60)
     return len(list(graph.traverse_from(start_node))) // 2
 
 
