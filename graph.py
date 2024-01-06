@@ -19,6 +19,9 @@ class Node(Generic[T]):
     def __eq__(self, other: Node[T]) -> bool:
         return hash(self) == hash(other)
 
+    def __repr__(self) -> str:
+        return repr(self.id)
+
 
 class TraversalState(Enum):
     PROCESSED = 0
@@ -37,8 +40,14 @@ class Graph(Generic[T]):
         node_1: NodeId,
         node_2: NodeId,
     ) -> None:
+        from day10_attempt_2 import GridCoordinate
+        if GridCoordinate(1, 4) in {node_1, node_2}:
+            print('hi')
         self._edges[node_1].add(self._nodes[node_2])
         self._edges[node_2].add(self._nodes[node_1])
+
+    def has_edge(self, node_1: NodeId, node_2: NodeId) -> bool:
+        return self._nodes[node_2] in self._edges[node_1]
 
     def traverse_from(
         self,
