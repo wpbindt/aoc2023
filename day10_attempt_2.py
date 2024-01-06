@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+import typing
 from dataclasses import dataclass
 from time import perf_counter
 from typing import Iterator, TypeVar
@@ -14,63 +14,41 @@ class GridCoordinate:
     x: int
     y: int
 
+    def __add__(self, other: GridCoordinate) -> GridCoordinate:
+        return GridCoordinate(self.x + other.x, self.y + other.y)
 
-class Direction(ABC):
-    @abstractmethod
+
+class Direction:
+    def __init__(self, delta: GridCoordinate) -> None:
+        self._delta = delta
+
     def opposite(self) -> Direction:
+        return Direction(GridCoordinate(x=-self._delta.x, y=-self._delta.y))
+
+    @typing.overload
+    def __add__(self, other: Direction) -> Direction:
         pass
 
-    @abstractmethod
+    @typing.overload
     def __add__(self, other: GridCoordinate) -> GridCoordinate:
         pass
 
+    def __add__(self, other):
+        if isinstance(other, Direction):
+            return Direction(self._delta + other._delta)
+        return other + self._delta
 
-@dataclass(frozen=True)
-class North(Direction):
-    def __repr__(self) -> str:
-        return 'N'
+    def __eq__(self, other: Direction) -> bool:
+        return self._delta == other._delta
 
-    def opposite(self) -> Direction:
-        return South()
-
-    def __add__(self, other: GridCoordinate) -> GridCoordinate:
-        return GridCoordinate(x=other.x, y=other.y - 1)
-
-
-@dataclass(frozen=True)
-class South(Direction):
-    def __repr__(self) -> str:
-        return 'S'
-
-    def opposite(self) -> Direction:
-        return North()
-
-    def __add__(self, other: GridCoordinate) -> GridCoordinate:
-        return GridCoordinate(x=other.x, y=other.y + 1)
+    def __hash__(self) -> int:
+        return hash(self._delta)
 
 
-@dataclass(frozen=True)
-class West(Direction):
-    def __repr__(self) -> str:
-        return 'W'
-
-    def opposite(self) -> Direction:
-        return East()
-
-    def __add__(self, other: GridCoordinate) -> GridCoordinate:
-        return GridCoordinate(x=other.x - 1, y=other.y)
-
-
-@dataclass(frozen=True)
-class East(Direction):
-    def __repr__(self) -> str:
-        return 'E'
-
-    def opposite(self) -> Direction:
-        return West()
-
-    def __add__(self, other: GridCoordinate) -> GridCoordinate:
-        return GridCoordinate(x=other.x + 1, y=other.y)
+north = Direction(GridCoordinate(0, -1))
+south = north.opposite()
+west = Direction(GridCoordinate(-1, 0))
+east = west.opposite()
 
 
 @dataclass(frozen=True)
@@ -122,12 +100,12 @@ def graph_from_connecting_grid_elements(grid: list[list[ConnectingGridElement]])
     return graph
 
 
-north_south = apply(lambda x: ConnectingGridElement({North(), South()}), word('|'))
-north_west = apply(lambda x: ConnectingGridElement({North(), West()}), word('J'))
-north_east = apply(lambda x: ConnectingGridElement({North(), East()}), word('L'))
-south_west = apply(lambda x: ConnectingGridElement({South(), West()}), word('7'))
-south_east = apply(lambda x: ConnectingGridElement({South(), East()}), word('F'))
-east_west = apply(lambda x: ConnectingGridElement({West(), East()}), word('-'))
+north_south = apply(lambda x: ConnectingGridElement({north, south}), word('|'))
+north_west = apply(lambda x: ConnectingGridElement({north, west}), word('J'))
+north_east = apply(lambda x: ConnectingGridElement({north, east}), word('L'))
+south_west = apply(lambda x: ConnectingGridElement({south, west}), word('7'))
+south_east = apply(lambda x: ConnectingGridElement({south, east}), word('F'))
+east_west = apply(lambda x: ConnectingGridElement({west, east}), word('-'))
 pipe: Parser[ConnectingGridElement | None] = or_(
     north_south,
     north_west,
@@ -136,7 +114,7 @@ pipe: Parser[ConnectingGridElement | None] = or_(
     south_east,
     east_west,
 )
-start = apply(lambda x: ConnectingGridElement({North(), East(), South(), West()}), word('S'))
+start = apply(lambda x: ConnectingGridElement({north, east, south, west}), word('S'))
 nothing = apply(lambda x: ConnectingGridElement(set()), word('.'))
 grid_element = or_(pipe, start, nothing)
 grid_row = many(grid_element)
