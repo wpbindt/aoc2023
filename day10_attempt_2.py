@@ -100,19 +100,19 @@ def graph_from_connecting_grid_elements(grid: list[list[ConnectingGridElement]])
     return graph
 
 
-north_south = apply(lambda x: ConnectingGridElement({north, south}), word('|'))
-north_west = apply(lambda x: ConnectingGridElement({north, west}), word('J'))
-north_east = apply(lambda x: ConnectingGridElement({north, east}), word('L'))
-south_west = apply(lambda x: ConnectingGridElement({south, west}), word('7'))
-south_east = apply(lambda x: ConnectingGridElement({south, east}), word('F'))
-east_west = apply(lambda x: ConnectingGridElement({west, east}), word('-'))
+north_south_pipe = apply(lambda x: ConnectingGridElement({north, south}), word('|'))
+north_west_pipe = apply(lambda x: ConnectingGridElement({north, west}), word('J'))
+north_east_pipe = apply(lambda x: ConnectingGridElement({north, east}), word('L'))
+south_west_pipe = apply(lambda x: ConnectingGridElement({south, west}), word('7'))
+south_east_pipe = apply(lambda x: ConnectingGridElement({south, east}), word('F'))
+east_west_pipe = apply(lambda x: ConnectingGridElement({west, east}), word('-'))
 pipe: Parser[ConnectingGridElement | None] = or_(
-    north_south,
-    north_west,
-    north_east,
-    south_west,
-    south_east,
-    east_west,
+    north_south_pipe,
+    north_west_pipe,
+    north_east_pipe,
+    south_west_pipe,
+    south_east_pipe,
+    east_west_pipe,
 )
 start = apply(lambda x: ConnectingGridElement({north, east, south, west}), word('S'))
 nothing = apply(lambda x: ConnectingGridElement(set()), word('.'))

@@ -36,18 +36,16 @@ graph traversal, start from S. Count discovered nodes, divide by 2.
 Second part:
      loop pipe is said to be (E/W)HNC if there is a loop piece to the E/W which does not connect
      loop pipe is said to be (N/S)VNC if there is a loop piece to the N/S which does not connect
-     loop pipe is DNC if there is a piece to the NE, NW, SE, SW which does not connect
 
      note that a pipe can be both HNC and VNC at the same time, as well as EHNC and WHNC at the same time
 
 Vertices: all non-loop tiles, all HNC and VNC loop tiles
 
-Edges:    non-loop tile: connect to everything horizontally/vertically adjacent, except loop tiles (which includes S)
+Edges:    non-loop tile: connect to everything horizontally/vertically/diagonally adjacent, except loop tiles (which includes S)
           EHNC loop pipe: connect to N, S, NE, SE
           WHNC loop pipe: connect to N, S, NW, SW
           NVNC loop pipe: connect to W, E, NW, NE
           SVNC loop pipe: connect to W, E, SW, SE
-          for every DNC: connect any two diagonally connected non-loop neighbors
 
 Starting at all vertices around the edge, do graph traversal. Count all non-loop undiscovered vertices
 
