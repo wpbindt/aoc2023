@@ -87,12 +87,17 @@ def get_neighbor(grid: list[list[T]], coordinate: GridCoordinate, direction: Dir
     return get_element(grid, direction + coordinate)
 
 
-def get_edge_coordinates(grid: list[list[typing.Any]]) -> Iterator[GridCoordinate]:
+def get_vertical_edge_coordinates(grid: list[list[typing.Any]]) -> Iterator[GridCoordinate]:
     height = len(grid)
     width = len(grid[0])
     for y in range(height):
         yield GridCoordinate(x=0, y=y)
         yield GridCoordinate(x=width - 1, y=y)
+
+
+def get_horizontal_edge_coordinates(grid: list[list[typing.Any]]) -> Iterator[GridCoordinate]:
+    height = len(grid)
+    width = len(grid[0])
     for x in range(width):
         yield GridCoordinate(x=x, y=0)
         yield GridCoordinate(x=x, y=height - 1)
@@ -107,8 +112,6 @@ def get_edges(grid: list[list[ConnectingGridElement]]) -> Iterator[tuple[GridCoo
             if connecting_direction.opposite() in neighbor.connecting_directions:
                 relevants = {coordinate, connecting_direction + coordinate}
                 assert len(relevants) > 1
-                if GridCoordinate(1, 4) in relevants:
-                    print('hi')
                 yield coordinate, connecting_direction + coordinate
 
 
@@ -158,14 +161,34 @@ def main(to_parse: str) -> int:
 
 def main_2(to_parse: str, start_node: GridCoordinate) -> int:
     parsed = grid(to_parse)
-    import pprint; pprint.pprint(parsed.result)
     if isinstance(parsed, CouldNotParse):
         raise Exception
     loop_graph = graph_from_connecting_grid_elements(parsed.result)
     loop = {node.id for node in loop_graph.traverse_from(start_node)}
-    print(loop)
 
     new_grid = [[ConnectingGridElement(set()) for _ in row] for row in parsed.result]
+    enc = {
+        coordinate
+        for coordinate in loop
+        if east + coordinate in loop and not loop_graph.has_edge(coordinate, east + coordinate)
+    }
+    wnc = {
+        coordinate
+        for coordinate in loop
+        if west + coordinate in loop and not loop_graph.has_edge(coordinate, west + coordinate)
+    }
+    nnc = {
+        coordinate
+        for coordinate in loop
+        if north + coordinate in loop and not loop_graph.has_edge(coordinate, north + coordinate)
+    }
+    snc = {
+        coordinate
+        for coordinate in loop
+        if south + coordinate in loop and not loop_graph.has_edge(coordinate, south + coordinate)
+    }
+    hnc = enc | wnc
+    vnc = snc | nnc
 
     for coordinate, element in iterate_grid(new_grid):
         if coordinate not in loop:
@@ -174,27 +197,33 @@ def main_2(to_parse: str, start_node: GridCoordinate) -> int:
                 for direction in all_directions
             })
             continue
-        if north + coordinate in loop and not loop_graph.has_edge(coordinate, north + coordinate):
+        if coordinate in nnc:
             element.connecting_directions.update({
                 west, east, north_west, north_east
             })
-        if south + coordinate in loop and not loop_graph.has_edge(coordinate, south + coordinate):
+        if coordinate in snc:
             element.connecting_directions.update({
                 west, east, south_west, south_east
             })
-        if east + coordinate in loop and not loop_graph.has_edge(coordinate, east + coordinate):
+        if coordinate in enc:
             element.connecting_directions.update({
                 north, south, south_east, north_east
             })
-        if west + coordinate in loop and not loop_graph.has_edge(coordinate, west + coordinate):
+        if coordinate in wnc:
             element.connecting_directions.update({
                 north, south, south_west, north_west
             })
 
     outsides = set()
-    pprint.pprint(new_grid)
     graph = graph_from_connecting_grid_elements(new_grid)
-    for coordinate in get_edge_coordinates(new_grid):
+    for coordinate in get_horizontal_edge_coordinates(new_grid):
+        if coordinate in loop and coordinate not in hnc:
+            continue
+        for node in graph.traverse_from(coordinate):
+            outsides.add(node.id)
+    for coordinate in get_vertical_edge_coordinates(new_grid):
+        if coordinate in loop and coordinate not in vnc:
+            continue
         for node in graph.traverse_from(coordinate):
             outsides.add(node.id)
     all_coordinates = {coordinate for coordinate, _ in iterate_grid(new_grid)}

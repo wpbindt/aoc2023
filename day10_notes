@@ -49,3 +49,8 @@ Edges:    non-loop tile: connect to everything horizontally/vertically/diagonall
 
 Starting at all vertices around the edge, do graph traversal. Count all non-loop undiscovered vertices
 
+does not work:
+
+|||
+|||
+|||  leads to path from bottom left to top right, which is bad
