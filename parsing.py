@@ -152,3 +152,12 @@ integer = or_(
     nonnegative_integer,
     nonpositive_integer,
 )
+
+
+def parse(parser: Parser[T]) -> Callable[[str]: T]:
+    def wrapped(to_parse: str) -> T:
+        result = parser(to_parse).result
+        if isinstance(result, CouldNotParse):
+            raise Exception
+        return result
+    return wrapped

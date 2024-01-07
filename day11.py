@@ -1,7 +1,8 @@
 from enum import Enum
+from functools import partial
 from typing import TypeVar, Iterator, Callable
 
-from parsing import CouldNotParse, word, apply, or_, many, separated_by
+from parsing import CouldNotParse, word, apply, or_, many, separated_by, parse
 
 T = TypeVar('T')
 
@@ -73,25 +74,20 @@ def pairs(my_set: set[T]) -> Iterator[tuple[T, T]]:
 def compose(*fs: Callable) -> Callable:
     if len(fs) == 1:
         return fs[0]
-    f, remaining_fs = fs
-    return lambda *args, **kwargs: f(compose(remaining_fs)(*args, **kwargs))
+    f, *remaining_fs = fs
+    return lambda *args, **kwargs: f(compose(*remaining_fs)(*args, **kwargs))
 
 
 def main(to_parse: str) -> int:
-    return sum(
-        map(
-            lambda x: distance(*x),
-            pairs(
-                get_galaxy_coordinates(
-                    expand_rows(
-                        expand_columns(
-                            space_document(to_parse).result
-                        )
-                    )
-                )
-            )
-        )
-    )
+    return compose(
+        sum,
+        partial(map, lambda x: distance(*x)),
+        pairs,
+        get_galaxy_coordinates,
+        expand_rows,
+        expand_columns,
+        parse(space_document),
+    )(to_parse)
 
 
 assert transpose([]) == []
