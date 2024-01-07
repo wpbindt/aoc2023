@@ -67,8 +67,7 @@ def distance(coordinate_1: Coordinate, coordinate_2: Coordinate) -> int:
 
 def right_pad(iterator: Iterator[T]) -> Iterator[T | None]:
     yield from iterator
-    while True:
-        yield None
+    yield from repeat(None)
 
 
 def pad(indices_to_yield_at: Iterator[int], iterator: Iterator[T]) -> Iterator[T | None]:
