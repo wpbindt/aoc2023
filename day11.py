@@ -2,7 +2,7 @@ from enum import Enum
 from functools import partial
 from itertools import count, repeat, combinations
 from time import perf_counter
-from typing import TypeVar, Iterator, Callable
+from typing import TypeVar, Iterator, Callable, TypeVarTuple
 
 from parsing import CouldNotParse, word, apply, or_, many, separated_by, parse
 
@@ -28,6 +28,13 @@ def transpose(matrix: list[list[T]]) -> list[list[T]]:
         ]
         for x in range(width)
     ]
+
+
+Ts = TypeVarTuple('Ts')
+
+
+def unpack_argument(f: Callable[[*Ts], T]) -> Callable[[tuple[*Ts]], T]:
+    return lambda x: f(*x)
 
 
 galaxy = apply(lambda x: Space.GALAXY, word('#'))
@@ -128,7 +135,7 @@ def main(to_parse: str) -> int:
 def main_2(to_parse: str, expansion: int) -> int:
     return compose(
         sum,
-        partial(map, lambda x: distance(*x)),
+        partial(map, unpack_argument(distance)),
         pairs,
         filter_out_nothingness,
         partial(get_expanded_coordinates, expansion=expansion),
