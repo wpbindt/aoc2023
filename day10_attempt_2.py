@@ -165,69 +165,26 @@ def main_2(to_parse: str, start_node: GridCoordinate) -> int:
         raise Exception
     loop_graph = graph_from_connecting_grid_elements(parsed.result)
     loop = {node.id for node in loop_graph.traverse_from(start_node)}
-
-    new_grid = [[ConnectingGridElement(set()) for _ in row] for row in parsed.result]
-    enc = {
-        coordinate
-        for coordinate in loop
-        if east + coordinate in loop and not loop_graph.has_edge(coordinate, east + coordinate)
-    }
-    wnc = {
-        coordinate
-        for coordinate in loop
-        if west + coordinate in loop and not loop_graph.has_edge(coordinate, west + coordinate)
-    }
-    nnc = {
-        coordinate
-        for coordinate in loop
-        if north + coordinate in loop and not loop_graph.has_edge(coordinate, north + coordinate)
-    }
-    snc = {
-        coordinate
-        for coordinate in loop
-        if south + coordinate in loop and not loop_graph.has_edge(coordinate, south + coordinate)
-    }
-    hnc = enc | wnc
-    vnc = snc | nnc
-
-    for coordinate, element in iterate_grid(new_grid):
-        if coordinate not in loop:
-            element.connecting_directions.update({
-                direction
-                for direction in all_directions
-            })
-            continue
-        if coordinate in nnc:
-            element.connecting_directions.update({
-                west, east, north_west, north_east
-            })
-        if coordinate in snc:
-            element.connecting_directions.update({
-                west, east, south_west, south_east
-            })
-        if coordinate in enc:
-            element.connecting_directions.update({
-                north, south, south_east, north_east
-            })
-        if coordinate in wnc:
-            element.connecting_directions.update({
-                north, south, south_west, north_west
-            })
-
-    outsides = set()
-    graph = graph_from_connecting_grid_elements(new_grid)
-    for coordinate in get_horizontal_edge_coordinates(new_grid):
-        if coordinate in loop and coordinate not in hnc:
-            continue
-        for node in graph.traverse_from(coordinate):
-            outsides.add(node.id)
-    for coordinate in get_vertical_edge_coordinates(new_grid):
-        if coordinate in loop and coordinate not in vnc:
-            continue
-        for node in graph.traverse_from(coordinate):
-            outsides.add(node.id)
-    all_coordinates = {coordinate for coordinate, _ in iterate_grid(new_grid)}
-    return len(all_coordinates - (loop | outsides))
+    count = 0
+    for y, row in enumerate(to_parse.split('\n')):
+        parity = 1
+        bend_stack = []
+        for x, ch in enumerate(row):
+            if GridCoordinate(x, y) in loop:
+                if ch in '|S':
+                    parity *= -1
+                    continue
+                if ch in '7JLF':
+                    if len(bend_stack) == 0:
+                        bend_stack.append(ch)
+                        continue
+                    last_bend = bend_stack.pop()
+                    if (last_bend, ch) in {('F', 'J'), ('L', '7')}:
+                        parity *= -1
+                continue
+            if parity == -1:
+                count += 1
+    return count
 
 
 with open('day10_inputr', 'r') as f:
@@ -254,7 +211,21 @@ example_data = """S---7
 ||.||
 |L7||
 L-JLJ"""
+e = """.F----7F7F7F7F-7....
+.|F--7||||||||FJ....
+.||.FJ||||||||L7....
+FJL7L7LJLJ||LJ.L-7..
+L--J.L7...LJS7F-7L7.
+....F-J..F7FJ|L7L7L7
+....L7.F7||L7|.L7L7|
+.....|FJLJ|FJ|F7|.LJ
+....FJL-7.||.||||...
+....L---J.LJ.LJLJ..."""
 start = perf_counter()
-print(main_2(example_data_2, GridCoordinate(0, 0)))
+# print(main_2(example_data_3, GridCoordinate(1, 1)))
+# print(main_2(example_data_2, GridCoordinate(0, 0)))
+# print(main_2(example_data, GridCoordinate(0, 0)))
+# print(main_2(e, GridCoordinate(12, 4)))
+print(main_2(to_parse, start_node))
 
 print(perf_counter() - start)

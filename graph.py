@@ -40,9 +40,6 @@ class Graph(Generic[T]):
         node_1: NodeId,
         node_2: NodeId,
     ) -> None:
-        from day10_attempt_2 import GridCoordinate
-        if GridCoordinate(1, 4) in {node_1, node_2}:
-            print('hi')
         self._edges[node_1].add(self._nodes[node_2])
         self._edges[node_2].add(self._nodes[node_1])
 
