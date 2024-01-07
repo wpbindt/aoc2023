@@ -8,7 +8,7 @@ from parsing import CouldNotParse, word, apply, or_, many, separated_by, parse
 
 T = TypeVar('T')
 
-EXPANSION = 1_000_000
+EXPANSION = 999_999
 
 
 class Space(Enum):
@@ -200,5 +200,5 @@ with open('day11_input') as f:
 
 
 start = perf_counter()
-print(main_2(to_parse, expansion=999_999))
+print(main_2(to_parse, expansion=EXPANSION))
 print(perf_counter() - start)
