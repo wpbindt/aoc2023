@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TypeVar
+from typing import TypeVar, Iterator, Callable
 
 from parsing import CouldNotParse, word, apply, or_, many, separated_by
 
@@ -45,6 +45,55 @@ def expand_columns(parsed_space: list[list[Space]]) -> list[list[Space]]:
     return transpose(expand_rows(transpose(parsed_space)))
 
 
+Coordinate = tuple[int, int]
+
+
+def distance(coordinate_1: Coordinate, coordinate_2: Coordinate) -> int:
+    x_distance = abs(coordinate_2[0] - coordinate_1[0])
+    y_distance = abs(coordinate_2[1] - coordinate_1[1])
+    return x_distance + y_distance
+
+
+def get_galaxy_coordinates(parsed_space: list[list[Space]]) -> set[Coordinate]:
+    return {
+        (x, y)
+        for y, row in enumerate(parsed_space)
+        for x, space_tile in enumerate(row)
+        if space_tile == Space.GALAXY
+    }
+
+
+def pairs(my_set: set[T]) -> Iterator[tuple[T, T]]:
+    ordered_set = list(my_set)
+    for index, element in enumerate(ordered_set):
+        for other_element in ordered_set[index:]:
+            yield element, other_element
+
+
+def compose(*fs: Callable) -> Callable:
+    if len(fs) == 1:
+        return fs[0]
+    f, remaining_fs = fs
+    return lambda *args, **kwargs: f(compose(remaining_fs)(*args, **kwargs))
+
+
+def main(to_parse: str) -> int:
+    return sum(
+        map(
+            lambda x: distance(*x),
+            pairs(
+                get_galaxy_coordinates(
+                    expand_rows(
+                        expand_columns(
+                            space_document(to_parse).result
+                        )
+                    )
+                )
+            )
+        )
+    )
+
+
 assert transpose([]) == []
 assert transpose([
     [0, 1],
@@ -76,3 +125,31 @@ assert expand_rows([[Space.GALAXY]]) == [[Space.GALAXY]]
 assert expand_columns([]) == []
 assert expand_columns([[Space.GALAXY]]) == [[Space.GALAXY]]
 assert expand_columns([[Space.NOTHING]]) == [[Space.NOTHING, Space.NOTHING]]
+
+assert distance((1, 1), (1, 1)) == 0
+assert distance((1, 1), (1, 2)) == 1
+assert distance((1, 2), (1, 1)) == 1
+assert distance((2, 1), (1, 1)) == 1
+assert distance((2, 2), (1, 1)) == 2
+
+assert get_galaxy_coordinates([[Space.NOTHING]]) == set()
+assert get_galaxy_coordinates([[Space.NOTHING, Space.GALAXY]]) == {(1, 0)}
+
+example_data = """...#......
+.......#..
+#.........
+..........
+......#...
+.#........
+.........#
+..........
+.......#..
+#...#....."""
+
+assert main(example_data) == 374, main(example_data)
+
+with open('day11_input') as f:
+    to_parse = f.read()
+
+
+print(main(to_parse))
