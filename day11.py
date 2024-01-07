@@ -1,6 +1,6 @@
 from enum import Enum
 from functools import partial
-from itertools import count, repeat
+from itertools import count, repeat, combinations
 from time import perf_counter
 from typing import TypeVar, Iterator, Callable
 
@@ -58,6 +58,12 @@ def distance(coordinate_1: Coordinate, coordinate_2: Coordinate) -> int:
     return x_distance + y_distance
 
 
+def right_pad(iterator: Iterator[T]) -> Iterator[T | None]:
+    yield from iterator
+    while True:
+        yield None
+
+
 def pad(indices_to_yield_at: Iterator[int], iterator: Iterator[T]) -> Iterator[T | None]:
     current_index_iterator = count()
     for index_to_yield_at, element in zip(indices_to_yield_at, iterator):
@@ -67,9 +73,6 @@ def pad(indices_to_yield_at: Iterator[int], iterator: Iterator[T]) -> Iterator[T
             yield None
         yield element
 
-    while True:
-        yield None
-
 
 def expanded_enumerate(iterator: Iterator[T], expansions: Iterator[int]) -> Iterator[tuple[int, T]]:
     total_expansion = 0
@@ -78,27 +81,30 @@ def expanded_enumerate(iterator: Iterator[T], expansions: Iterator[int]) -> Iter
         yield index + total_expansion, element
 
 
+def get_expansions(expansion_points: Iterator[int], expansion: int) -> Iterator[int]:
+    yield from map(
+        lambda x: 0 if x is None else x,
+        right_pad(
+            pad(
+                indices_to_yield_at=expansion_points,
+                iterator=repeat(expansion)
+            ),
+        )
+    )
+
+
 def get_galaxy_coordinates(parsed_space: list[list[Space]], expansion: int) -> Iterator[Coordinate]:
     t_parsed_space = transpose(parsed_space)
-    row_expansions = map(
-        lambda x: 0 if x is None else x,
-        pad(indices_to_yield_at=get_empty_column_numbers(parsed_space), iterator=repeat(expansion))
-    )
+    row_expansions = get_expansions(get_empty_column_numbers(parsed_space), expansion=expansion)
     for y, row in expanded_enumerate(t_parsed_space, expansions=row_expansions):
-        column_expansions = map(
-            lambda x: 0 if x is None else x,
-            pad(indices_to_yield_at=get_empty_row_numbers(parsed_space), iterator=repeat(expansion))
-        )
+        column_expansions = get_expansions(get_empty_row_numbers(parsed_space), expansion=expansion)
         for x, element in expanded_enumerate(row, expansions=column_expansions):
             if element == Space.GALAXY:
                 yield x, y
 
 
-def pairs(my_set: set[T]) -> Iterator[tuple[T, T]]:
-    ordered_set = list(my_set)
-    for index, element in enumerate(ordered_set):
-        for other_element in ordered_set[index:]:
-            yield element, other_element
+def pairs(my_set: Iterator[T]) -> Iterator[tuple[T, T]]:
+    yield from combinations(my_set, 2)
 
 
 def compose(*fs: Callable) -> Callable:
