@@ -1,6 +1,7 @@
 from enum import Enum
 from functools import partial
 from itertools import count, repeat
+from time import perf_counter
 from typing import TypeVar, Iterator, Callable
 
 from parsing import CouldNotParse, word, apply, or_, many, separated_by, parse
@@ -78,14 +79,15 @@ def expanded_enumerate(iterator: Iterator[T], expansions: Iterator[int]) -> Iter
 
 
 def get_galaxy_coordinates(parsed_space: list[list[Space]], expansion: int) -> Iterator[Coordinate]:
+    t_parsed_space = transpose(parsed_space)
     row_expansions = map(
         lambda x: 0 if x is None else x,
-        pad(indices_to_yield_at=get_empty_row_numbers(parsed_space), iterator=repeat(expansion))
+        pad(indices_to_yield_at=get_empty_column_numbers(parsed_space), iterator=repeat(expansion))
     )
-    for y, row in expanded_enumerate(parsed_space, expansions=row_expansions):
+    for y, row in expanded_enumerate(t_parsed_space, expansions=row_expansions):
         column_expansions = map(
             lambda x: 0 if x is None else x,
-            pad(indices_to_yield_at=get_empty_column_numbers(parsed_space), iterator=repeat(expansion))
+            pad(indices_to_yield_at=get_empty_row_numbers(parsed_space), iterator=repeat(expansion))
         )
         for x, element in expanded_enumerate(row, expansions=column_expansions):
             if element == Space.GALAXY:
@@ -183,4 +185,6 @@ with open('day11_input') as f:
     to_parse = f.read()
 
 
+start = perf_counter()
 print(main_2(to_parse, expansion=999_999))
+print(perf_counter() - start)
