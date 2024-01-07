@@ -36,15 +36,6 @@ space_row = many(space)
 space_document = separated_by(space_row, '\n')
 
 
-def expand_rows(parsed_space: list[list[Space]]) -> list[list[Space]]:
-    expanded_space = []
-    for row in parsed_space:
-        expanded_space.append(row.copy())
-        if Space.GALAXY not in row:
-            expanded_space.append(row.copy())
-    return expanded_space
-
-
 def get_empty_column_numbers(parsed_space: list[list[Space]]) -> Iterator[int]:
     yield from get_empty_row_numbers(transpose(parsed_space))
 
@@ -57,10 +48,6 @@ def get_empty_row_numbers(parsed_space: list[list[Space]]) -> Iterator[int]:
     )
 
 
-def expand_columns(parsed_space: list[list[Space]]) -> list[list[Space]]:
-    return transpose(expand_rows(transpose(parsed_space)))
-
-
 Coordinate = tuple[int, int]
 
 
@@ -68,15 +55,6 @@ def distance(coordinate_1: Coordinate, coordinate_2: Coordinate) -> int:
     x_distance = abs(coordinate_2[0] - coordinate_1[0])
     y_distance = abs(coordinate_2[1] - coordinate_1[1])
     return x_distance + y_distance
-
-
-def get_unexpanded_galaxy_coordinates(parsed_space: list[list[Space]]) -> set[Coordinate]:
-    return {
-        (x, y)
-        for y, row in enumerate(parsed_space)
-        for x, space_tile in enumerate(row)
-        if space_tile == Space.GALAXY
-    }
 
 
 def pad(indices_to_yield_at: Iterator[int], iterator: Iterator[T]) -> Iterator[T | None]:
@@ -129,15 +107,7 @@ def compose(*fs: Callable) -> Callable:
 
 
 def main(to_parse: str) -> int:
-    return compose(
-        sum,
-        partial(map, lambda x: distance(*x)),
-        pairs,
-        get_unexpanded_galaxy_coordinates,
-        expand_rows,
-        expand_columns,
-        parse(space_document),
-    )(to_parse)
+    return main_2(to_parse, expansion=1)
 
 
 def main_2(to_parse: str, expansion: int) -> int:
@@ -148,6 +118,7 @@ def main_2(to_parse: str, expansion: int) -> int:
         partial(get_galaxy_coordinates, expansion=expansion),
         parse(space_document),
     )(to_parse)
+
 
 assert transpose([]) == []
 assert transpose([
@@ -186,24 +157,12 @@ assert list(get_empty_column_numbers([
     [Space.NOTHING],
 ])) == [0]
 
-assert expand_rows([]) == []
-assert expand_rows([[Space.NOTHING]]) == 2 * [[Space.NOTHING]]
-assert expand_rows([[Space.GALAXY]]) == [[Space.GALAXY]]
-
-assert expand_columns([]) == []
-assert expand_columns([[Space.GALAXY]]) == [[Space.GALAXY]]
-assert expand_columns([[Space.NOTHING]]) == [[Space.NOTHING, Space.NOTHING]]
-
 assert distance((1, 1), (1, 1)) == 0
 assert distance((1, 1), (1, 2)) == 1
 assert distance((1, 2), (1, 1)) == 1
 assert distance((2, 1), (1, 1)) == 1
 assert distance((2, 2), (1, 1)) == 2
-assert get_unexpanded_galaxy_coordinates([[Space.NOTHING]]) == set()
-assert get_unexpanded_galaxy_coordinates([[Space.NOTHING, Space.GALAXY]]) == {(1, 0)}
 
-# assert list(pad(iter([1, 2, 4]), iter([9, 9, 9]))) == [None, 9, 9, None, 9]
-# assert list(pad(iter([0, 2, 4]), iter([9, 9, 9]))) == [9, None, 9, None, 9]
 assert list(expanded_enumerate(iterator=iter('..#.'), expansions=iter([0, 1, 0, 1]))) == [(0, '.'), (2, '.'), (3, '#'), (5, '.')]
 example_data = """...#......
 .......#..
@@ -216,7 +175,7 @@ example_data = """...#......
 .......#..
 #...#....."""
 
-assert main_2(example_data, expansion=1) == 374, main_2(to_parse=example_data, expansion=1)
+assert main(example_data) == 374, main(to_parse=example_data)
 assert main_2(example_data, expansion=9) == 1030, main_2(example_data, expansion=9)
 assert main_2(example_data, expansion=99) == 8410, main_2(example_data, expansion=99)
 
