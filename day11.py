@@ -93,14 +93,21 @@ def get_expansions(expansion_points: Iterator[int], expansion: int) -> Iterator[
     )
 
 
-def get_galaxy_coordinates(parsed_space: list[list[Space]], expansion: int) -> Iterator[Coordinate]:
+def get_expanded_coordinates(parsed_space: list[list[Space]], expansion: int) -> Iterator[tuple[Coordinate, Space]]:
     t_parsed_space = transpose(parsed_space)
     row_expansions = get_expansions(get_empty_column_numbers(parsed_space), expansion=expansion)
     for y, row in expanded_enumerate(t_parsed_space, expansions=row_expansions):
         column_expansions = get_expansions(get_empty_row_numbers(parsed_space), expansion=expansion)
-        for x, element in expanded_enumerate(row, expansions=column_expansions):
-            if element == Space.GALAXY:
-                yield x, y
+        for x, tile in expanded_enumerate(row, expansions=column_expansions):
+            yield (x, y), tile
+
+
+def filter_out_nothingness(space_coordinates: Iterator[tuple[Coordinate, Space]]) -> Iterator[Coordinate]:
+    yield from (
+        coordinate
+        for coordinate, space_tile in space_coordinates
+        if space_tile == Space.GALAXY
+    )
 
 
 def pairs(my_set: Iterator[T]) -> Iterator[tuple[T, T]]:
@@ -123,7 +130,8 @@ def main_2(to_parse: str, expansion: int) -> int:
         sum,
         partial(map, lambda x: distance(*x)),
         pairs,
-        partial(get_galaxy_coordinates, expansion=expansion),
+        filter_out_nothingness,
+        partial(get_expanded_coordinates, expansion=expansion),
         parse(space_document),
     )(to_parse)
 
