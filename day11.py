@@ -42,6 +42,18 @@ def expand_rows(parsed_space: list[list[Space]]) -> list[list[Space]]:
     return expanded_space
 
 
+def get_empty_column_numbers(parsed_space: list[list[Space]]) -> Iterator[int]:
+    yield from get_empty_row_numbers(transpose(parsed_space))
+
+
+def get_empty_row_numbers(parsed_space: list[list[Space]]) -> Iterator[int]:
+    yield from (
+        index
+        for index, row in enumerate(parsed_space)
+        if Space.GALAXY not in row
+    )
+
+
 def expand_columns(parsed_space: list[list[Space]]) -> list[list[Space]]:
     return transpose(expand_rows(transpose(parsed_space)))
 
@@ -114,6 +126,19 @@ assert space_document('#.#\n...').result == [
     [Space.NOTHING, Space.NOTHING, Space.NOTHING],
 ]
 
+assert list(get_empty_row_numbers([])) == []
+assert list(get_empty_row_numbers([
+    [Space.NOTHING],
+])) == [0]
+assert list(get_empty_row_numbers([
+    [Space.GALAXY],
+])) == []
+
+assert list(get_empty_column_numbers([])) == []
+assert list(get_empty_column_numbers([
+    [Space.NOTHING],
+])) == [0]
+
 assert expand_rows([]) == []
 assert expand_rows([[Space.NOTHING]]) == 2 * [[Space.NOTHING]]
 assert expand_rows([[Space.GALAXY]]) == [[Space.GALAXY]]
@@ -148,4 +173,4 @@ with open('day11_input') as f:
     to_parse = f.read()
 
 
-print(main(to_parse))
+# print(main(to_parse))
