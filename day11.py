@@ -1,10 +1,13 @@
 from enum import Enum
 from functools import partial
+from itertools import count, repeat
 from typing import TypeVar, Iterator, Callable
 
 from parsing import CouldNotParse, word, apply, or_, many, separated_by, parse
 
 T = TypeVar('T')
+
+EXPANSION = 1_000_000
 
 
 class Space(Enum):
@@ -67,13 +70,48 @@ def distance(coordinate_1: Coordinate, coordinate_2: Coordinate) -> int:
     return x_distance + y_distance
 
 
-def get_galaxy_coordinates(parsed_space: list[list[Space]]) -> set[Coordinate]:
+def get_unexpanded_galaxy_coordinates(parsed_space: list[list[Space]]) -> set[Coordinate]:
     return {
         (x, y)
         for y, row in enumerate(parsed_space)
         for x, space_tile in enumerate(row)
         if space_tile == Space.GALAXY
     }
+
+
+def pad(indices_to_yield_at: Iterator[int], iterator: Iterator[T]) -> Iterator[T | None]:
+    current_index_iterator = count()
+    for index_to_yield_at, element in zip(indices_to_yield_at, iterator):
+        for current_index in current_index_iterator:
+            if current_index == index_to_yield_at:
+                break
+            yield None
+        yield element
+
+    while True:
+        yield None
+
+
+def expanded_enumerate(iterator: Iterator[T], expansions: Iterator[int]) -> Iterator[tuple[int, T]]:
+    total_expansion = 0
+    for index, expansion, element in zip(count(), expansions, iterator):
+        total_expansion += expansion
+        yield index + total_expansion, element
+
+
+def get_galaxy_coordinates(parsed_space: list[list[Space]], expansion: int) -> Iterator[Coordinate]:
+    row_expansions = map(
+        lambda x: 0 if x is None else x,
+        pad(indices_to_yield_at=get_empty_row_numbers(parsed_space), iterator=repeat(expansion))
+    )
+    for y, row in expanded_enumerate(parsed_space, expansions=row_expansions):
+        column_expansions = map(
+            lambda x: 0 if x is None else x,
+            pad(indices_to_yield_at=get_empty_column_numbers(parsed_space), iterator=repeat(expansion))
+        )
+        for x, element in expanded_enumerate(row, expansions=column_expansions):
+            if element == Space.GALAXY:
+                yield x, y
 
 
 def pairs(my_set: set[T]) -> Iterator[tuple[T, T]]:
@@ -95,12 +133,21 @@ def main(to_parse: str) -> int:
         sum,
         partial(map, lambda x: distance(*x)),
         pairs,
-        get_galaxy_coordinates,
+        get_unexpanded_galaxy_coordinates,
         expand_rows,
         expand_columns,
         parse(space_document),
     )(to_parse)
 
+
+def main_2(to_parse: str, expansion: int) -> int:
+    return compose(
+        sum,
+        partial(map, lambda x: distance(*x)),
+        pairs,
+        partial(get_galaxy_coordinates, expansion=expansion),
+        parse(space_document),
+    )(to_parse)
 
 assert transpose([]) == []
 assert transpose([
@@ -152,10 +199,12 @@ assert distance((1, 1), (1, 2)) == 1
 assert distance((1, 2), (1, 1)) == 1
 assert distance((2, 1), (1, 1)) == 1
 assert distance((2, 2), (1, 1)) == 2
+assert get_unexpanded_galaxy_coordinates([[Space.NOTHING]]) == set()
+assert get_unexpanded_galaxy_coordinates([[Space.NOTHING, Space.GALAXY]]) == {(1, 0)}
 
-assert get_galaxy_coordinates([[Space.NOTHING]]) == set()
-assert get_galaxy_coordinates([[Space.NOTHING, Space.GALAXY]]) == {(1, 0)}
-
+# assert list(pad(iter([1, 2, 4]), iter([9, 9, 9]))) == [None, 9, 9, None, 9]
+# assert list(pad(iter([0, 2, 4]), iter([9, 9, 9]))) == [9, None, 9, None, 9]
+assert list(expanded_enumerate(iterator=iter('..#.'), expansions=iter([0, 1, 0, 1]))) == [(0, '.'), (2, '.'), (3, '#'), (5, '.')]
 example_data = """...#......
 .......#..
 #.........
@@ -167,10 +216,12 @@ example_data = """...#......
 .......#..
 #...#....."""
 
-assert main(example_data) == 374, main(example_data)
+assert main_2(example_data, expansion=1) == 374, main_2(to_parse=example_data, expansion=1)
+assert main_2(example_data, expansion=9) == 1030, main_2(example_data, expansion=9)
+assert main_2(example_data, expansion=99) == 8410, main_2(example_data, expansion=99)
 
 with open('day11_input') as f:
     to_parse = f.read()
 
 
-# print(main(to_parse))
+print(main_2(to_parse, expansion=999_999))
